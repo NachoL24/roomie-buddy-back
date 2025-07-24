@@ -1,9 +1,9 @@
 import { Controller, Get, UseGuards, Request, Post } from '@nestjs/common';
 import { AppService } from './app.service';
 import { AuthGuard } from '@nestjs/passport';
-import { Auth0UserinfoAdapter } from './adapters/outbound/auth0/auth0-userInfo.adapter';
-import { Auth0ManagementApiAdapter } from './adapters/outbound/auth0/auth0-managementapi.adapter';
-import { ProfileCompletedGuard } from './adapters/inbound/http/auth/profile-completed.guard';
+import { Auth0UserinfoAdapter } from './infrastructure/external-services/auth0/auth0-userInfo.adapter';
+import { Auth0ManagementApiAdapter } from './infrastructure/external-services/auth0/auth0-managementapi.adapter';
+import { ProfileCompletedGuard } from './presentation/guards/profile-completed.guard';
 
 @UseGuards(AuthGuard('jwt'), ProfileCompletedGuard)
 @Controller()
