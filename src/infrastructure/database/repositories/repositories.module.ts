@@ -1,0 +1,24 @@
+import { Module } from '@nestjs/common';
+import { HouseRepositoryModule } from './house-repository.module';
+import { RoomieRepositoryModule } from './roomie-repository.module';
+import { ExpenseRepositoryModule } from './expense-repository.module';
+import { ExpenseShareRepositoryModule } from './expense-share-repository.module';
+import { RoomieHouseRepositoryModule } from './roomie-house-repository.module';
+
+@Module({
+    imports: [
+        HouseRepositoryModule,
+        RoomieRepositoryModule,
+        ExpenseRepositoryModule,
+        ExpenseShareRepositoryModule,
+        RoomieHouseRepositoryModule,
+    ],
+    exports: [
+        HouseRepositoryModule,
+        RoomieRepositoryModule,
+        ExpenseRepositoryModule,
+        ExpenseShareRepositoryModule,
+        RoomieHouseRepositoryModule,
+    ],
+})
+export class RepositoriesModule { }
