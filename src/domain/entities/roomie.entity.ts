@@ -1,3 +1,5 @@
+import { RoomieUpdateDto } from "src/presentation/dtos/roomie_update.request.dto";
+
 export class Roomie {
     public readonly id: number;
     public readonly name: string;
@@ -62,5 +64,20 @@ export class Roomie {
 
     public get fullName(): string {
         return `${this.name} ${this.surname}`;
+    }
+
+    public static updateFrom(existing: Roomie, dto: RoomieUpdateDto): Roomie {
+        return new Roomie(
+            existing.id,
+            dto.name || existing.name,
+            dto.surname || existing.surname,
+            dto.email || existing.email,
+            existing.createdAt,
+            existing.auth0Sub,
+            dto.document !== undefined ? dto.document : existing.document,
+            dto.picture !== undefined ? dto.picture : existing.picture,
+            new Date(), // updatedAt
+            existing.deletedAt
+        );
     }
 }

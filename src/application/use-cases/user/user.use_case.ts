@@ -1,29 +1,31 @@
+import { Auth0ManagementApiAdapter } from 'src/infrastructure/external-services/auth0/auth0-managementapi.adapter';
 import { Inject, Injectable } from "@nestjs/common";
 import { AuthenticatedUserDto } from "src/application/dto/user/authenticated-user.dto";
 import { Roomie } from "src/domain/entities";
 import { RoomieRepository } from "src/domain/repositories";
 import { ROOMIE_REPOSITORY } from "src/infrastructure/database/repositories";
 import { Auth0Profile, Auth0UserinfoAdapter } from "src/infrastructure/external-services/auth0/auth0-userInfo.adapter";
-import { RoomieDto } from "src/presentation/dtos/roomie.dto";
+import { RoomieResponseDto } from "src/presentation/dtos/roomie.response.dto";
+import { RoomieUpdateDto } from "src/presentation/dtos/roomie_update.request.dto";
 
 @Injectable()
 export class UserUseCase {
 
-    constructor(@Inject(ROOMIE_REPOSITORY) private readonly roomieRepository: RoomieRepository, private readonly auth0UserinfoAdapter: Auth0UserinfoAdapter) { }
+    constructor(@Inject(ROOMIE_REPOSITORY) private readonly roomieRepository: RoomieRepository, private readonly auth0UserinfoAdapter: Auth0UserinfoAdapter, private readonly auth0ManagementApiAdapter: Auth0ManagementApiAdapter) { }
 
-    async getUserOrCreateUser(auth0Payload: AuthenticatedUserDto): Promise<RoomieDto> {
+    async getUserOrCreateUser(auth0Payload: AuthenticatedUserDto): Promise<RoomieResponseDto> {
         // 1. Intentar encontrar usuario por Auth0 Sub
         console.log("Fetching user by Auth0 Sub:", auth0Payload.sub);
         let existingUser = await this.roomieRepository.findByAuth0Sub(auth0Payload.sub);
 
         if (existingUser) {
-            return RoomieDto.fromDomain(existingUser);
+            return RoomieResponseDto.fromDomain(existingUser);
         }
         console.log("No existing user found by Auth0 Sub, fetching user info...");
         const userInfo = await this.auth0UserinfoAdapter.fetchProfile(auth0Payload.accessToken);
         console.log("Fetched user info:", userInfo);
         if (!userInfo) {
-            throw new Error('Failed to fetch user info from Auth0');
+            throw new Error('No se pudo obtener la información del usuario, intentelo mas tarde');
         }
 
         // 2. Si no existe por Auth0 Sub, buscar por email (usuarios migrados)
@@ -34,13 +36,13 @@ export class UserUseCase {
             const updatedUser = this.linkAuth0ToExistingUser(existingUser, auth0Payload.sub);
             const savedUser = await this.roomieRepository.save(updatedUser);
             console.log("Updated existing user with Auth0 Sub:", savedUser);
-            return RoomieDto.fromDomain(savedUser);
+            return RoomieResponseDto.fromDomain(savedUser);
         }
 
         // 3. Crear nuevo usuario
         const newUser = await this.createUserFromAuth0(userInfo);
 
-        const roomieDto = RoomieDto.fromDomain(newUser);
+        const roomieDto = RoomieResponseDto.fromDomain(newUser);
         console.log("Created Roomie DTO:", roomieDto);
         return roomieDto;
     }
@@ -83,4 +85,38 @@ export class UserUseCase {
             new Date() // updatedAt
         );
     }
-}   
+
+    async updateUser(user: AuthenticatedUserDto, dto: RoomieUpdateDto, id: number): Promise<any> {
+        console.log("UserUseCase - updateUser called for userId:", id, "with data:", dto);
+        const existingRoomie = await this.roomieRepository.findById(id);
+
+        if (!existingRoomie) {
+            throw new Error('Usuario no encontrado');
+        }
+
+        if (existingRoomie.auth0Sub !== user.sub) {
+            throw new Error('Solo puedes actualizar tu propio perfil');
+        }
+
+        console.log("Existing Roomie found:", existingRoomie);
+        const updatedRoomie = Roomie.updateFrom(existingRoomie, dto);
+
+        this.checkProfileCompletion(updatedRoomie);
+        
+        console.log("Updated Roomie before saving:", updatedRoomie);
+        await this.roomieRepository.save(updatedRoomie);
+
+        console.log("Updated Roomie saved successfully:", updatedRoomie);
+        return RoomieResponseDto.fromDomain(updatedRoomie);
+    }
+
+    private checkProfileCompletion(updatedRoomie: Roomie): void {
+        const isProfileComplete = !!(updatedRoomie.name && updatedRoomie.surname && updatedRoomie.email && updatedRoomie.document && updatedRoomie.picture);
+        if (!isProfileComplete) {
+            throw new Error('El perfil no está completo. Asegúrate de proporcionar todos los campos requeridos.');
+        }
+        console.log("Profile completion status:", isProfileComplete);
+        this.auth0ManagementApiAdapter.updateUserMetadata(updatedRoomie.auth0Sub, { profile_complete: isProfileComplete });
+    }
+}
+

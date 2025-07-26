@@ -1,6 +1,6 @@
 import { Roomie } from "src/domain/entities/roomie.entity";
 
-export class RoomieDto {
+export class RoomieResponseDto {
     id: number;
     name: string;
     surname: string;
@@ -51,12 +51,12 @@ export class RoomieDto {
         id?: number,
         document?: string,
         picture?: string
-    ): RoomieDto {
+    ): RoomieResponseDto {
         var profileCompleted = false;
         if (name && surname && email && document && picture) {
             profileCompleted = true;
         }
-        return new RoomieDto(
+        return new RoomieResponseDto(
             id || 0,
             name,
             surname,
@@ -68,8 +68,8 @@ export class RoomieDto {
         );
     }
 
-    static fromDomain(roomie: Roomie): RoomieDto {
-        return new RoomieDto(
+    static fromDomain(roomie: Roomie): RoomieResponseDto {
+        return new RoomieResponseDto(
             roomie.id,
             roomie.name,
             roomie.surname,
