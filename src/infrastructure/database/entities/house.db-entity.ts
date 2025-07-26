@@ -1,3 +1,4 @@
+import { Invitation } from './invitation.db-entity';
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { RoomieHouse } from "./roomie-house.db-entity";
 
@@ -20,4 +21,8 @@ export class House {
 
     @OneToMany(() => RoomieHouse, rh => rh.house)
     memberships: RoomieHouse[];
+    
+    @OneToMany(() => Invitation, i => i.house)
+    invitations: Invitation[];
+
 }

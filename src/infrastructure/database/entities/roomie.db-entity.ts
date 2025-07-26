@@ -6,6 +6,7 @@ import {
 import { RoomieHouse } from './roomie-house.db-entity';
 import { ExpenseShare } from './expense-share.db-entity';
 import { Expense } from './expense.db-entity';
+import { Invitation } from './invitation.db-entity';
 // import { RoomieHouse } from './roomie-house.entity';
 // import { Expense } from './expense.entity';
 // import { ExpenseShare } from './expense-share.entity';
@@ -50,4 +51,10 @@ export class Roomie {
 
     @OneToMany(() => ExpenseShare, es => es.roomie)
     shares: ExpenseShare[];
+
+    @OneToMany(() => Invitation, i => i.inviter)
+    sentInvitations: Invitation[];
+
+    @OneToMany(() => Invitation, i => i.invitee)
+    receivedInvitations: Invitation[];
 }

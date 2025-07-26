@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryColumn } from "typeorm";
 import { Roomie } from "./roomie.db-entity";
 import { House } from "./house.db-entity";
 
@@ -19,4 +19,8 @@ export class RoomieHouse {
 
     @ManyToOne(() => House, house => house.memberships, { onDelete: 'CASCADE' })
     house: House;
+
+    @CreateDateColumn() joinedAt: Date;      // ← ya indica “desde”
+    @Column({ type: 'timestamp', nullable: true })
+    leftAt?: Date;  // ← nullable porque puede que no haya salido aún
 }
