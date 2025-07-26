@@ -5,6 +5,7 @@ import { House } from "./entities/house.db-entity";
 import { RoomieHouse } from "./entities/roomie-house.db-entity";
 import { Expense } from "./entities/expense.db-entity";
 import { ExpenseShare } from "./entities/expense-share.db-entity";
+import { Invitation } from "./entities/invitation.db-entity";
 
 export class DatabaseConnectionModule {
     static forRoot() {
@@ -24,7 +25,8 @@ export class DatabaseConnectionModule {
                         House,
                         RoomieHouse,
                         Expense,
-                        ExpenseShare
+                        ExpenseShare,
+                        Invitation
                     ],
                     synchronize: true,
                     logging: true,
