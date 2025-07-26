@@ -7,6 +7,8 @@ import { Auth0UserinfoModule } from './infrastructure/external-services/auth0/au
 import { Auth0ManagementApiModule } from './infrastructure/external-services/auth0/auth0-managementapi.module';
 import { DatabaseConnectionModule } from './infrastructure/database/database-conection.module';
 import { RepositoriesModule } from './infrastructure/database/repositories';
+import { UserController } from './presentation/controllers/user.controller';
+import { UseCasesModule } from './application/use-cases/use-cases.module';
 
 @Module({
   imports: [
@@ -18,8 +20,9 @@ import { RepositoriesModule } from './infrastructure/database/repositories';
     Auth0ManagementApiModule,
     DatabaseConnectionModule.forRoot(),
     RepositoriesModule,
+    UseCasesModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, UserController],
   providers: [AppService],
 })
 export class AppModule { }

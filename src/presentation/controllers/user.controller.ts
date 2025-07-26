@@ -4,6 +4,7 @@ import { Auth0ManagementApiAdapter } from 'src/infrastructure/external-services/
 import { Auth0UserinfoAdapter } from 'src/infrastructure/external-services/auth0/auth0-userInfo.adapter';
 import { User } from '../decorators/user.decorator';
 import { AuthenticatedUserDto } from '../../application/dto/user/authenticated-user.dto';
+import { UserUseCase } from 'src/application/use-cases/user/user.use_case';
 
 @Controller("user")
 @UseGuards(AuthGuard('jwt'))
@@ -11,15 +12,14 @@ export class UserController {
     constructor(
         // private readonly userService: UserService,
         private readonly auth0UserinfoAdapter: Auth0UserinfoAdapter,
-        private readonly auth0ManagementApiAdapter: Auth0ManagementApiAdapter
+        private readonly auth0ManagementApiAdapter: Auth0ManagementApiAdapter,
+        private readonly userUseCase: UserUseCase
     ) { }
 
     @Get()
-    getUser(@User() user: AuthenticatedUserDto): any {
-        return {
-            message: 'User information retrieved successfully',
-            user: user,
-        };
+    getUserOrCreateUser(@User() user: AuthenticatedUserDto): any {
+        console.log("UserController - getUserOrCreateUser called with user:", user);
+        return this.userUseCase.getUserOrCreateUser(user);
     }
 
     @Get("user-info")
@@ -39,7 +39,7 @@ export class UserController {
             return { message: 'No user authenticated' };
         }
         try {
-            const metadata = await this.auth0ManagementApiAdapter.getUserMetadata(user.userId);
+            const metadata = await this.auth0ManagementApiAdapter.getUserMetadata(user.sub);
             return { user: user, metadata };
         } catch (error) {
             return { message: 'Error fetching user metadata', error: error.message };
@@ -55,13 +55,13 @@ export class UserController {
 
         try {
             // Verificar el estado actual desde Auth0, no del token
-            const currentMetadata = await this.auth0ManagementApiAdapter.getUserMetadata(user.userId);
+            const currentMetadata = await this.auth0ManagementApiAdapter.getUserMetadata(user.sub);
 
             if (currentMetadata.profile_complete === true) {
                 return { message: 'Profile already completed', metadata: currentMetadata };
             }
 
-            await this.auth0ManagementApiAdapter.updateUserMetadata(user.userId, { profile_complete: true });
+            await this.auth0ManagementApiAdapter.updateUserMetadata(user.sub, { profile_complete: true });
 
             return {
                 message: 'Profile completed successfully',
@@ -81,13 +81,13 @@ export class UserController {
 
         try {
             // Verificar el estado actual desde Auth0, no del token
-            const currentMetadata = await this.auth0ManagementApiAdapter.getUserMetadata(user.userId);
+            const currentMetadata = await this.auth0ManagementApiAdapter.getUserMetadata(user.sub);
 
             if (currentMetadata.profile_complete === false || currentMetadata.profile_complete === undefined) {
                 return { message: 'Profile already uncompleted', metadata: currentMetadata };
             }
 
-            await this.auth0ManagementApiAdapter.updateUserMetadata(user.userId, { profile_complete: false });
+            await this.auth0ManagementApiAdapter.updateUserMetadata(user.sub, { profile_complete: false });
 
             return {
                 message: 'Profile uncompleted successfully',
@@ -96,19 +96,5 @@ export class UserController {
         } catch (error) {
             return { message: 'Error updating profile', error: error.message };
         }
-    }
-
-    @Get('public')
-    getPublic(): string {
-        return 'This is a public endpoint - no authentication required';
-    }
-
-    @Get('test-env')
-    testEnv(): any {
-        return {
-            domain: process.env.AUTH0_DOMAIN,
-            audience: process.env.AUTH0_AUDIENCE,
-            jwksUri: `${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`
-        };
     }
 }

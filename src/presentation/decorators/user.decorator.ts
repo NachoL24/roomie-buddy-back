@@ -5,8 +5,8 @@ export const User = createParamDecorator(
     (data: keyof AuthenticatedUserDto | undefined, ctx: ExecutionContext): AuthenticatedUserDto | any => {
         const request = ctx.switchToHttp().getRequest();
         const user = request.user;
+        user.accessToken = request.headers.authorization?.split(' ')[1];
 
-        // Si se especifica una propiedad específica, devolverla
         return data ? user?.[data] : user;
     },
 );

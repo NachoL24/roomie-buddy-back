@@ -5,9 +5,12 @@ import { AxiosResponse } from 'axios';
 
 export interface Auth0Profile {
     sub: string;
-    email?: string;
+    email: string;
     name?: string;
+    given_name?: string;
+    family_name?: string;
     picture?: string;
+    email_verified?: boolean;
 }
 
 @Injectable()

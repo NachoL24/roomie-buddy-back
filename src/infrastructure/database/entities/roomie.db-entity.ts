@@ -19,6 +19,9 @@ export class Roomie {
     name: string;
 
     @Column()
+    auth0Sub: string;
+
+    @Column()
     surname: string;
 
     @Column({ nullable: true })

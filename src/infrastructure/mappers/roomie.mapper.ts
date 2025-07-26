@@ -9,6 +9,7 @@ export class RoomieMapper {
             dbRoomie.surname,
             dbRoomie.email,
             dbRoomie.createdAt,
+            dbRoomie.auth0Sub,
             dbRoomie.document,
             dbRoomie.picture,
             dbRoomie.updatedAt,
@@ -24,6 +25,7 @@ export class RoomieMapper {
         dbRoomie.name = domainRoomie.name;
         dbRoomie.surname = domainRoomie.surname;
         dbRoomie.email = domainRoomie.email;
+        dbRoomie.auth0Sub = domainRoomie.auth0Sub;
         dbRoomie.document = domainRoomie.document;
         dbRoomie.picture = domainRoomie.picture;
         dbRoomie.createdAt = domainRoomie.createdAt;

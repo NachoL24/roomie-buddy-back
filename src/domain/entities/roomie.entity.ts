@@ -4,6 +4,7 @@ export class Roomie {
     public readonly surname: string;
     public readonly document?: string;
     public readonly email: string;
+    public readonly auth0Sub: string;
     public readonly picture?: string;
     public readonly createdAt: Date;
     public readonly updatedAt?: Date;
@@ -15,6 +16,7 @@ export class Roomie {
         surname: string,
         email: string,
         createdAt: Date,
+        auth0Sub: string,
         document?: string,
         picture?: string,
         updatedAt?: Date,
@@ -26,6 +28,7 @@ export class Roomie {
         this.email = email;
         this.createdAt = createdAt;
         this.document = document;
+        this.auth0Sub = auth0Sub;
         this.picture = picture;
         this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
@@ -35,6 +38,7 @@ export class Roomie {
         name: string,
         surname: string,
         email: string,
+        auth0Sub: string,
         id?: number,
         document?: string,
         picture?: string,
@@ -48,6 +52,7 @@ export class Roomie {
             surname,
             email,
             createdAt || new Date(),
+            auth0Sub,
             document,
             picture,
             updatedAt,

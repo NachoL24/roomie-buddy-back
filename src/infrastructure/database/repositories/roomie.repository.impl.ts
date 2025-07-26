@@ -13,8 +13,15 @@ export class TypeOrmRoomieRepository implements RoomieRepository {
         private readonly roomieRepository: Repository<DbRoomie>
     ) { }
 
+    findByAuth0Sub(auth0Sub: string): Promise<DomainRoomie | null> {
+        return this.roomieRepository.findOne({ where: { auth0Sub } })
+            .then(dbRoomie => dbRoomie ? RoomieMapper.toDomain(dbRoomie) : null);
+    }
+
     async findById(id: number): Promise<DomainRoomie | null> {
+        console.log("Finding roomie by ID:", id);
         const dbRoomie = await this.roomieRepository.findOne({ where: { id } });
+        console.log("Finding roomie by ID:", id, "Result:", dbRoomie);
         return dbRoomie ? RoomieMapper.toDomain(dbRoomie) : null;
     }
 
