@@ -5,7 +5,7 @@ export class RoomieDto {
     name: string;
     surname: string;
     email: string;
-    auth0Sub?: string;
+    auth0Sub: string;
     profileCompleted: boolean;
     document?: string;
     picture?: string;
@@ -16,7 +16,7 @@ export class RoomieDto {
         surname: string,
         email: string,
         profileCompleted: boolean,
-        auth0Sub?: string,
+        auth0Sub: string,
         document?: string,
         picture?: string
     ) {
@@ -47,8 +47,8 @@ export class RoomieDto {
         name: string,
         surname: string,
         email: string,
+        auth0Sub: string,
         id?: number,
-        auth0Sub?: string,
         document?: string,
         picture?: string
     ): RoomieDto {
