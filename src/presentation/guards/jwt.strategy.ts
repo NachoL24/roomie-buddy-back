@@ -3,6 +3,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import * as jwksRsa from 'jwks-rsa';
+import { AuthenticatedUserDto } from '../../application/dto/user/authenticated-user.dto';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -31,7 +32,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         });
     }
 
-    async validate(payload: any) {
+    async validate(payload: any): Promise<AuthenticatedUserDto> {
         console.log('JWT Payload received:', payload);
 
         if (!payload) {

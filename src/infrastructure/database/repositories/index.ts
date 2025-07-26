@@ -1,5 +1,5 @@
 // Repository tokens for dependency injection
-export { HOUSE_REPOSITORY } from './house-repository.module';
+export { HOUSE_REPO_TOKEN } from './house-repository.module';
 export { ROOMIE_REPOSITORY } from './roomie-repository.module';
 export { EXPENSE_REPOSITORY } from './expense-repository.module';
 export { EXPENSE_SHARE_REPOSITORY } from './expense-share-repository.module';

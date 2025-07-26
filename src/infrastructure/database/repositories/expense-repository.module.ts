@@ -3,14 +3,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Expense as DbExpense } from '../entities/expense.db-entity';
 import { TypeOrmExpenseRepository } from './expense.repository.impl';
 
-export const EXPENSE_REPOSITORY = 'ExpenseRepository';
+export const EXPENSE_REPOSITORY = Symbol('ExpenseRepository');
 
 @Module({
     imports: [TypeOrmModule.forFeature([DbExpense])],
     providers: [
+        TypeOrmExpenseRepository,
         {
             provide: EXPENSE_REPOSITORY,
-            useClass: TypeOrmExpenseRepository,
+            useExisting: TypeOrmExpenseRepository,
         },
     ],
     exports: [EXPENSE_REPOSITORY],

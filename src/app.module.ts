@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './presentation/guards/auth.module';
@@ -9,6 +10,9 @@ import { RepositoriesModule } from './infrastructure/database/repositories';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     AuthModule,
     Auth0UserinfoModule,
     Auth0ManagementApiModule,

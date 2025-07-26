@@ -1,15 +1,6 @@
-version: 3
+version: '3'
 
 services:
-  # web:
-  #   image: nginx:latest
-  #   ports:
-  #     - "80:80"
-  #   volumes:
-  #     - ./html:/usr/share/nginx/html
-  #   networks:
-  #     - webnet
-
   db:
     image: mysql:latest
     environment:
@@ -21,4 +12,10 @@ services:
       - roomie-buddy
     ports:
       - "3306:3306"
-      # mysql://root:root@db:3306/roomie_buddy
+
+networks:
+    roomie-buddy:
+      driver: bridge
+volumes:
+    db_data:
+      driver: local
