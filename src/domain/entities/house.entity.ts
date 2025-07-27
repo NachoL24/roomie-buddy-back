@@ -30,4 +30,17 @@ export class House {
             new Date()
         );
     }
+
+    public static createWithUpdatedName(
+        existingHouse: House,
+        newName: string
+    ): House {
+        return new House(
+            existingHouse.id,
+            newName,
+            existingHouse.createdAt,
+            new Date(),
+            existingHouse.deletedAt
+        );
+    }
 }

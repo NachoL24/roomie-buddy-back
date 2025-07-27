@@ -7,6 +7,7 @@ import { HouseUseCase } from "src/application/use-cases/house/user/house.use_cas
 import { HouseResponseDto } from "../dtos/house/house.response.dto";
 import { HouseWithMembersResponseDto } from "../dtos/house/house-with-members.response.dto";
 import { HouseCreateDto } from "../dtos/house/house_create.request.dto";
+import { HouseUpdateNameRequestDto } from "../dtos/house/house-update-name.request.dto";
 import { UpdatePayRatiosRequestDto } from "../dtos/house/update-pay-ratios.request.dto";
 import { UpdatePayRatiosResponseDto } from "../dtos/house/update-pay-ratios.response.dto";
 
@@ -42,6 +43,31 @@ export class HouseController {
         @User() user: AuthenticatedUserDto
     ): Promise<UpdatePayRatiosResponseDto> {
         return await this.houseUseCase.updatePayRatios(houseId, updatePayRatiosDto, user.sub);
+    }
+
+    /**
+     * Actualizar nombre de la casa
+     * PUT /houses/{houseId}/name
+     */
+    @Put(':houseId/name')
+    async updateHouseName(
+        @Param('houseId') houseId: number,
+        @Body() updateNameDto: HouseUpdateNameRequestDto,
+        @User() user: AuthenticatedUserDto
+    ): Promise<HouseResponseDto> {
+        return await this.houseUseCase.updateHouseName(houseId, updateNameDto, user.sub);
+    }
+
+    /**
+     * Salir de una casa (eliminar membresía activa)
+     * DELETE /houses/{houseId}/leave
+     */
+    @Delete(':houseId/leave')
+    async leaveHouse(
+        @Param('houseId') houseId: number,
+        @User() user: AuthenticatedUserDto
+    ): Promise<void> {
+        return await this.houseUseCase.leaveHouse(houseId, user.sub);
     }
 
     // @Put(':id')
