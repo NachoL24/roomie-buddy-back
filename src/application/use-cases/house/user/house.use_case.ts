@@ -8,6 +8,7 @@ import { HouseResponseDto } from "src/presentation/dtos/house/house.response.dto
 import { HouseWithMembersResponseDto, HouseMemberDto } from "src/presentation/dtos/house/house-with-members.response.dto";
 import { UpdatePayRatiosRequestDto } from "src/presentation/dtos/house/update-pay-ratios.request.dto";
 import { UpdatePayRatiosResponseDto } from "src/presentation/dtos/house/update-pay-ratios.response.dto";
+import { RemoveMemberResponseDto } from "src/presentation/dtos/house/remove-member.response.dto";
 import { HouseRepository, RoomieHouseRepository, RoomieRepository } from "src/domain/repositories";
 
 @Injectable()
@@ -196,6 +197,54 @@ export class HouseUseCase {
 
         // Eliminar la membresía del usuario
         await this.roomieHouseRepository.delete(parseInt(userId), houseId);
+    }
+
+    async removeMemberFromHouse(houseId: number, roomieIdToRemove: number, adminAuth0Sub: string): Promise<RemoveMemberResponseDto> {
+        // Verificar que la casa existe
+        const existingHouse = await this.houseRepository.findById(houseId);
+        if (!existingHouse) {
+            throw new NotFoundException(`House with ID ${houseId} not found`);
+        }
+
+        // Verificar que el admin es miembro de la casa
+        const admin = await this.roomieRepository.findByAuth0Sub(adminAuth0Sub);
+        if (!admin) {
+            throw new NotFoundException('Admin user not found');
+        }
+
+        const adminMembership = await this.roomieHouseRepository.findByRoomieAndHouse(admin.id, houseId);
+        if (!adminMembership) {
+            throw new BadRequestException(`Admin is not a member of house ${houseId}`);
+        }
+
+        // Verificar que el roomie a remover existe y es miembro de la casa
+        const roomieToRemove = await this.roomieRepository.findById(roomieIdToRemove);
+        if (!roomieToRemove) {
+            throw new NotFoundException(`Roomie with ID ${roomieIdToRemove} not found`);
+        }
+
+        const membershipToRemove = await this.roomieHouseRepository.findByRoomieAndHouse(roomieIdToRemove, houseId);
+        if (!membershipToRemove) {
+            throw new BadRequestException(`Roomie ${roomieIdToRemove} is not a member of house ${houseId}`);
+        }
+
+        // No permitir que se remueva a sí mismo (usar leaveHouse para eso)
+        if (admin.id === roomieIdToRemove) {
+            throw new BadRequestException('Cannot remove yourself from the house. Use leave house instead.');
+        }
+
+        // Verificar que no sea el único miembro de la casa
+        const allMembers = await this.roomieHouseRepository.findByHouseId(houseId);
+        if (allMembers.length === 1) {
+            throw new BadRequestException(`Cannot remove the only member from house ${houseId}. Delete the house instead.`);
+        }
+
+        // Eliminar la membresía del roomie
+        await this.roomieHouseRepository.delete(roomieIdToRemove, houseId);
+
+        console.log(`Admin ${admin.id} removed roomie ${roomieIdToRemove} from house ${houseId}`);
+
+        return RemoveMemberResponseDto.create(roomieIdToRemove, houseId, admin.id);
     }
 
 }

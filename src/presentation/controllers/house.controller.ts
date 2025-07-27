@@ -10,6 +10,7 @@ import { HouseCreateDto } from "../dtos/house/house_create.request.dto";
 import { HouseUpdateNameRequestDto } from "../dtos/house/house-update-name.request.dto";
 import { UpdatePayRatiosRequestDto } from "../dtos/house/update-pay-ratios.request.dto";
 import { UpdatePayRatiosResponseDto } from "../dtos/house/update-pay-ratios.response.dto";
+import { RemoveMemberResponseDto } from '../dtos/house/remove-member.response.dto';
 
 @Controller('houses')
 @UseGuards(AuthGuard('jwt'), ProfileCompletedGuard)
@@ -68,6 +69,19 @@ export class HouseController {
         @User() user: AuthenticatedUserDto
     ): Promise<void> {
         return await this.houseUseCase.leaveHouse(houseId, user.sub);
+    }
+
+    /**
+     * Remover un miembro específico de la casa
+     * DELETE /houses/{houseId}/members/{roomieId}
+     */
+    @Delete(':houseId/members/:roomieId')
+    async removeMemberFromHouse(
+        @Param('houseId') houseId: number,
+        @Param('roomieId') roomieId: number,
+        @User() user: AuthenticatedUserDto
+    ): Promise<RemoveMemberResponseDto> {
+        return await this.houseUseCase.removeMemberFromHouse(houseId, roomieId, user.sub);
     }
 
     // @Put(':id')
