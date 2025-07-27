@@ -77,4 +77,15 @@ export class TypeOrmExpenseRepository implements ExpenseRepository {
         });
         return ExpenseMapper.toDomainArray(dbExpenses);
     }
+
+    async findByHouseIdAndDateRange(houseId: number, startDate: Date, endDate: Date): Promise<DomainExpense[]> {
+        const dbExpenses = await this.expenseRepository.find({
+            where: {
+                house: { id: houseId },
+                date: Between(startDate, endDate)
+            },
+            relations: ['paidBy', 'house']
+        });
+        return ExpenseMapper.toDomainArray(dbExpenses);
+    }
 }
