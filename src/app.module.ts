@@ -10,6 +10,7 @@ import { RepositoriesModule } from './infrastructure/database/repositories';
 import { UserController } from './presentation/controllers/user.controller';
 import { UseCasesModule } from './application/use-cases/use-cases.module';
 import { HouseController } from './presentation/controllers/house.controller';
+import { InvitationController } from './presentation/controllers/invitation.controller';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { HouseController } from './presentation/controllers/house.controller';
     RepositoriesModule,
     UseCasesModule,
   ],
-  controllers: [AppController, UserController, HouseController],
+  controllers: [AppController, UserController, HouseController, InvitationController],
   providers: [AppService],
 })
 export class AppModule { }
