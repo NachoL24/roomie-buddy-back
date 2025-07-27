@@ -5,6 +5,7 @@ import { ExpenseRepositoryModule } from './expense-repository.module';
 import { ExpenseShareRepositoryModule } from './expense-share-repository.module';
 import { RoomieHouseRepositoryModule } from './roomie-house-repository.module';
 import { InvitationRepositoryModule } from './invitation-repository.module';
+import { SettlementRepositoryModule } from './settlement-repository.module';
 
 @Module({
     imports: [
@@ -14,6 +15,7 @@ import { InvitationRepositoryModule } from './invitation-repository.module';
         ExpenseShareRepositoryModule,
         RoomieHouseRepositoryModule,
         InvitationRepositoryModule,
+        SettlementRepositoryModule,
     ],
     exports: [
         HouseRepositoryModule,
@@ -22,6 +24,7 @@ import { InvitationRepositoryModule } from './invitation-repository.module';
         ExpenseShareRepositoryModule,
         RoomieHouseRepositoryModule,
         InvitationRepositoryModule,
+        SettlementRepositoryModule,
     ],
 })
 export class RepositoriesModule { }
