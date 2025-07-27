@@ -38,19 +38,19 @@ export class AppController {
   //   return this.auth0UserinfoAdapter.fetchProfile(token);
   // }
 
-  // @Get('user-metadata')
-  // @UseGuards(AuthGuard('jwt'))
-  // async getUserMetadata(@Request() req: any): Promise<any> {
-  //   if (!req.user) {
-  //     return { message: 'No user authenticated' };
-  //   }
-  //   try {
-  //     const metadata = await this.auth0ManagementApiAdapter.getUserMetadata(req.user.sub);
-  //     return { user: req.user, metadata };
-  //   } catch (error) {
-  //     return { message: 'Error fetching user metadata', error: error.message };
-  //   }
-  // }
+  @Get('user-metadata')
+  @UseGuards(AuthGuard('jwt'))
+  async getUserMetadata(@Request() req: any): Promise<any> {
+    if (!req.user) {
+      return { message: 'No user authenticated' };
+    }
+    try {
+      const metadata = await this.auth0ManagementApiAdapter.getUserMetadata(req.user.sub);
+      return { user: req.user, metadata };
+    } catch (error) {
+      return { message: 'Error fetching user metadata', error: error.message };
+    }
+  }
 
   // @Post('complete-profile')
   // @UseGuards(AuthGuard('jwt'))

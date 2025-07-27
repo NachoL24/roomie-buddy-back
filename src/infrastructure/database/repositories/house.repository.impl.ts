@@ -37,4 +37,14 @@ export class TypeOrmHouseRepository implements HouseRepository {
         const dbHouse = await this.dbRepository.findOne({ where: { name } });
         return dbHouse ? HouseMapper.toDomain(dbHouse) : null;
     }
+
+    async findByRoomieId(roomieId: number): Promise<DomainHouse[]> {
+        const dbHouses = await this.dbRepository
+            .createQueryBuilder('house')
+            .innerJoin('house.memberships', 'membership')
+            .where('membership.roomie.id = :roomieId', { roomieId })
+            .getMany();
+
+        return HouseMapper.toDomainArray(dbHouses);
+    }
 }

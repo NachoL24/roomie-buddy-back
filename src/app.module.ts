@@ -9,6 +9,7 @@ import { DatabaseConnectionModule } from './infrastructure/database/database-con
 import { RepositoriesModule } from './infrastructure/database/repositories';
 import { UserController } from './presentation/controllers/user.controller';
 import { UseCasesModule } from './application/use-cases/use-cases.module';
+import { HouseController } from './presentation/controllers/house.controller';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { UseCasesModule } from './application/use-cases/use-cases.module';
     RepositoriesModule,
     UseCasesModule,
   ],
-  controllers: [AppController, UserController],
+  controllers: [AppController, UserController, HouseController],
   providers: [AppService],
 })
 export class AppModule { }

@@ -6,4 +6,5 @@ export interface HouseRepository {
     save(house: House): Promise<House>;
     delete(id: number): Promise<void>;
     findByName(name: string): Promise<House | null>;
+    findByRoomieId(roomieId: number): Promise<House[]>;
 }

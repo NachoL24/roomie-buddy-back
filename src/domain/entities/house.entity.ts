@@ -1,3 +1,5 @@
+import { HouseCreateDto } from "src/presentation/dtos/house/house_create.request.dto";
+
 export class House {
     public readonly id: number;
     public readonly name: string;
@@ -20,18 +22,12 @@ export class House {
     }
 
     public static create(
-        name: string,
-        id?: number,
-        createdAt?: Date,
-        updatedAt?: Date,
-        deletedAt?: Date
+        dto: HouseCreateDto
     ): House {
         return new House(
-            id || 0,
-            name,
-            createdAt || new Date(),
-            updatedAt,
-            deletedAt
+            0,
+            dto.name,
+            new Date()
         );
     }
 }

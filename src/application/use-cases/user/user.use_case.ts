@@ -1,12 +1,13 @@
 import { Auth0ManagementApiAdapter } from 'src/infrastructure/external-services/auth0/auth0-managementapi.adapter';
 import { Inject, Injectable } from "@nestjs/common";
 import { AuthenticatedUserDto } from "src/application/dto/user/authenticated-user.dto";
-import { Roomie } from "src/domain/entities";
+import { House, Roomie } from "src/domain/entities";
 import { RoomieRepository } from "src/domain/repositories";
 import { ROOMIE_REPOSITORY } from "src/infrastructure/database/repositories";
 import { Auth0Profile, Auth0UserinfoAdapter } from "src/infrastructure/external-services/auth0/auth0-userInfo.adapter";
 import { RoomieResponseDto } from "src/presentation/dtos/roomie.response.dto";
 import { RoomieUpdateDto } from "src/presentation/dtos/roomie_update.request.dto";
+import { HouseResponseDto } from 'src/presentation/dtos/house/house.response.dto';
 
 @Injectable()
 export class UserUseCase {

@@ -1,3 +1,4 @@
+import { House } from 'src/infrastructure/database/entities/house.db-entity';
 import { Roomie } from '../entities/roomie.entity';
 
 export interface RoomieRepository {
