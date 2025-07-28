@@ -5,7 +5,7 @@ export class IncomeResponseDto {
     public readonly description: string;
     public readonly amount: number;
     public readonly earnedById: number;
-    public readonly houseId: number;
+    public readonly houseId?: number;
     public readonly isRecurring: boolean;
     public readonly recurrenceFrequency?: string;
     public readonly nextRecurrenceDate?: Date;
@@ -17,10 +17,10 @@ export class IncomeResponseDto {
         description: string,
         amount: number,
         earnedById: number,
-        houseId: number,
         isRecurring: boolean,
         earnedAt: Date,
         createdAt: Date,
+        houseId?: number,
         recurrenceFrequency?: string,
         nextRecurrenceDate?: Date
     ) {
@@ -28,10 +28,10 @@ export class IncomeResponseDto {
         this.description = description;
         this.amount = amount;
         this.earnedById = earnedById;
-        this.houseId = houseId;
         this.isRecurring = isRecurring;
         this.earnedAt = earnedAt;
         this.createdAt = createdAt;
+        this.houseId = houseId;
         this.recurrenceFrequency = recurrenceFrequency;
         this.nextRecurrenceDate = nextRecurrenceDate;
     }
@@ -42,10 +42,10 @@ export class IncomeResponseDto {
             income.description,
             income.amount,
             income.earnedById,
-            income.houseId,
             income.isRecurring,
             income.earnedAt,
             income.createdAt,
+            income.houseId,
             income.recurrenceFrequency,
             income.nextRecurrenceDate
         );

@@ -5,6 +5,7 @@ import { ExpenseRepositoryModule } from 'src/infrastructure/database/repositorie
 import { ExpenseShareRepositoryModule } from 'src/infrastructure/database/repositories/expense-share-repository.module';
 import { RoomieHouseRepositoryModule } from 'src/infrastructure/database/repositories/roomie-house-repository.module';
 import { RoomieRepositoryModule } from 'src/infrastructure/database/repositories/roomie-repository.module';
+import { ExpenseUseCaseModule } from '../expense/expense-usecase.module';
 
 @Module({
     imports: [
@@ -12,7 +13,8 @@ import { RoomieRepositoryModule } from 'src/infrastructure/database/repositories
         ExpenseRepositoryModule,
         ExpenseShareRepositoryModule,
         RoomieHouseRepositoryModule,
-        RoomieRepositoryModule
+        RoomieRepositoryModule,
+        ExpenseUseCaseModule
     ],
     providers: [SettlementUseCase],
     exports: [SettlementUseCase]
