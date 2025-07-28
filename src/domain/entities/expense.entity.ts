@@ -7,15 +7,15 @@ export class Expense {
     public readonly updatedAt?: Date;
     public readonly deletedAt?: Date;
     public readonly paidById: number;
-    public readonly houseId: number;
+    public readonly houseId?: number;
 
     constructor(
         id: number,
         amount: number,
         date: Date,
         paidById: number,
-        houseId: number,
         createdAt: Date,
+        houseId?: number,
         description?: string,
         updatedAt?: Date,
         deletedAt?: Date
@@ -35,7 +35,7 @@ export class Expense {
         amount: number,
         date: Date,
         paidById: number,
-        houseId: number,
+        houseId?: number,
         id?: number,
         description?: string,
         createdAt?: Date,
@@ -47,8 +47,8 @@ export class Expense {
             amount,
             date,
             paidById,
-            houseId,
             createdAt || new Date(),
+            houseId,
             description,
             updatedAt,
             deletedAt

@@ -3,7 +3,7 @@ export class Income {
     public readonly description: string;
     public readonly amount: number;
     public readonly earnedById: number; // Quien recibió el ingreso
-    public readonly houseId: number;
+    public readonly houseId?: number;
     public readonly isRecurring: boolean; // Para sueldos mensuales, etc.
     public readonly recurrenceFrequency?: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
     public readonly nextRecurrenceDate?: Date;
@@ -15,7 +15,7 @@ export class Income {
         description: string,
         amount: number,
         earnedById: number,
-        houseId: number,
+        houseId: number | undefined,
         earnedAt: Date,
         createdAt: Date,
         isRecurring: boolean = false,
@@ -38,7 +38,7 @@ export class Income {
         description: string,
         amount: number,
         earnedById: number,
-        houseId: number,
+        houseId?: number,
         earnedAt?: Date,
         id?: number,
         isRecurring: boolean = false,

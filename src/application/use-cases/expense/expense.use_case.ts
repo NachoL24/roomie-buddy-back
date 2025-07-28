@@ -9,6 +9,7 @@ import { ExpenseResponseDto } from "src/presentation/dtos/expense/expense.respon
 import { ExpenseWithSharesResponseDto } from "src/presentation/dtos/expense/expense-with-shares.response.dto";
 import { ExpenseShareResponseDto } from "src/presentation/dtos/expense/expense-share.response.dto";
 import { ExpenseSummaryResponseDto } from "src/presentation/dtos/expense/expense-summary.response.dto";
+import { PersonalFinanceSyncService } from "src/application/services/personal-finance-sync.service";
 
 @Injectable()
 export class ExpenseUseCase {
@@ -17,6 +18,7 @@ export class ExpenseUseCase {
         @Inject(EXPENSE_REPOSITORY) private readonly expenseRepository: ExpenseRepository,
         @Inject(EXPENSE_SHARE_REPOSITORY) private readonly expenseShareRepository: ExpenseShareRepository,
         @Inject(ROOMIE_HOUSE_REPOSITORY) private readonly roomieHouseRepository: RoomieHouseRepository,
+        private readonly personalFinanceSyncService: PersonalFinanceSyncService,
     ) { }
 
     async createExpense(createExpenseDto: ExpenseCreateRequestDto): Promise<ExpenseWithSharesResponseDto> {
@@ -60,8 +62,11 @@ export class ExpenseUseCase {
             expenseShares = await this.createExpenseShares(savedExpense.id, createExpenseDto.expenseShares);
         } else {
             // Dividir equitativamente entre todos los miembros activos según payRatio
-            expenseShares = await this.createEqualExpenseShares(savedExpense.id, createExpenseDto.houseId, createExpenseDto.amount);
+            expenseShares = await this.createEqualExpenseShares(savedExpense.id, createExpenseDto.amount, createExpenseDto.houseId);
         }
+
+        // Sincronizar con finanzas personales
+        await this.personalFinanceSyncService.syncExpenseToPersonalFinances(savedExpense);
 
         return this.mapToExpenseWithSharesResponse(savedExpense, expenseShares);
     }
@@ -97,6 +102,10 @@ export class ExpenseUseCase {
 
         // Verificar que el pagador sigue siendo miembro activo de la casa si se cambia
         if (updateExpenseDto.paidById) {
+            if (!existingExpense.houseId) {
+                throw new BadRequestException(`Cannot update expense. Expense ${expenseId} has no associated house.`);
+            }
+
             const paidByMembership = await this.roomieHouseRepository.findByRoomieAndHouse(
                 updateExpenseDto.paidById,
                 existingExpense.houseId
@@ -108,6 +117,10 @@ export class ExpenseUseCase {
 
         // VALIDAR TODO ANTES DE ACTUALIZAR CUALQUIER COSA
         if (updateExpenseDto.expenseShares) {
+            if (!existingExpense.houseId) {
+                throw new BadRequestException(`Cannot update expense shares. Expense ${expenseId} has no associated house.`);
+            }
+
             // Validar expense shares si se van a actualizar
             const finalAmount = updateExpenseDto.amount ?? existingExpense.amount;
             await this.validateExpenseShares(updateExpenseDto.expenseShares, finalAmount, existingExpense.houseId);
@@ -126,6 +139,11 @@ export class ExpenseUseCase {
         );
 
         const savedExpense = await this.expenseRepository.save(updatedExpense);
+
+        // Sincronizar con finanzas personales (solo si es un gasto de casa)
+        if (savedExpense.houseId !== null && savedExpense.houseId !== undefined) {
+            await this.personalFinanceSyncService.syncExpenseToPersonalFinances(savedExpense);
+        }
 
         // Si se actualizan las expense shares, eliminar las existentes y crear nuevas
         if (updateExpenseDto.expenseShares) {
@@ -293,7 +311,7 @@ export class ExpenseUseCase {
         return savedShares;
     }
 
-    private async createEqualExpenseShares(expenseId: number, houseId: number, totalAmount: number): Promise<ExpenseShare[]> {
+    private async createEqualExpenseShares(expenseId: number, totalAmount: number, houseId: number): Promise<ExpenseShare[]> {
         // Obtener todos los miembros activos de la casa
         const roomieHouses = await this.roomieHouseRepository.findByHouseId(houseId);
 
@@ -327,7 +345,7 @@ export class ExpenseUseCase {
         response.createdAt = expense.createdAt;
         response.updatedAt = expense.updatedAt;
         response.paidById = expense.paidById;
-        response.houseId = expense.houseId;
+        response.houseId = expense.houseId ?? 0; // Default to 0 if undefined, though this shouldn't happen for house expenses
         response.expenseShares = expenseShares.map(share => ({
             id: share.id,
             expenseId: share.expenseId,

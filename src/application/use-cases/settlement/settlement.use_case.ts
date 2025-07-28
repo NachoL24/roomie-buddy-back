@@ -5,6 +5,7 @@ import { ExpenseRepository, ExpenseShareRepository, RoomieHouseRepository, Roomi
 import { SettlementCreateRequestDto } from "src/presentation/dtos/settlement/settlement-create.request.dto";
 import { SettlementResponseDto } from "src/presentation/dtos/settlement/settlement.response.dto";
 import { HouseBalanceSummaryResponseDto, BalanceDto, DetailedBalanceDto } from "src/presentation/dtos/settlement/balance-summary.response.dto";
+import { PersonalFinanceSyncService } from "src/application/services/personal-finance-sync.service";
 
 @Injectable()
 export class SettlementUseCase {
@@ -15,6 +16,7 @@ export class SettlementUseCase {
         @Inject(EXPENSE_SHARE_REPOSITORY) private readonly expenseShareRepository: ExpenseShareRepository,
         @Inject(ROOMIE_HOUSE_REPOSITORY) private readonly roomieHouseRepository: RoomieHouseRepository,
         @Inject(ROOMIE_REPOSITORY) private readonly roomieRepository: RoomieRepository,
+        private readonly personalFinanceSyncService: PersonalFinanceSyncService,
     ) { }
 
     async createSettlement(createSettlementDto: SettlementCreateRequestDto, auth0Sub: string): Promise<SettlementResponseDto> {
@@ -56,6 +58,9 @@ export class SettlementUseCase {
         );
 
         const savedSettlement = await this.settlementRepository.save(settlement);
+
+        // Sincronizar con finanzas personales
+        await this.personalFinanceSyncService.syncSettlementToPersonalFinances(savedSettlement);
 
         return this.mapToSettlementResponse(savedSettlement);
     }

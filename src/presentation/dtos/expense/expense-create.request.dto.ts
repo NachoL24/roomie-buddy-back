@@ -5,6 +5,6 @@ export class ExpenseCreateRequestDto {
     amount: number;
     date: Date;
     paidById: number;
-    houseId: number;
+    houseId: number; // Requerido para gastos de casa
     expenseShares?: ExpenseShareDto[];
 }

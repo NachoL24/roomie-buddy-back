@@ -29,7 +29,7 @@ export class Expense {
     @ManyToOne(() => Roomie, roomie => roomie.id, { onDelete: 'CASCADE', eager: true })
     paidBy: Roomie;
 
-    @ManyToOne(() => House, house => house.id, { onDelete: 'CASCADE', eager: true })
+    @ManyToOne(() => House, house => house.id, { onDelete: 'CASCADE', eager: true, nullable: true })
     house: House;
 
     @OneToMany(() => ExpenseShare, share => share.expense, { eager: true })

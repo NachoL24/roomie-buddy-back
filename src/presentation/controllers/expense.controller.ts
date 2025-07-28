@@ -9,14 +9,14 @@ import { ExpenseUpdateRequestDto } from "../dtos/expense/expense-update.request.
 import { ExpenseWithSharesResponseDto } from "../dtos/expense/expense-with-shares.response.dto";
 import { ExpenseSummaryResponseDto } from "../dtos/expense/expense-summary.response.dto";
 
-@Controller('expenses')
+@Controller('expenses/house')
 @UseGuards(AuthGuard('jwt'), ProfileCompletedGuard)
 export class ExpenseController {
 
     constructor(private readonly expenseUseCase: ExpenseUseCase) { }
 
     @Post()
-    async create(
+    async createHouseExpense(
         @Body() createExpenseDto: ExpenseCreateRequestDto,
         @User() user: AuthenticatedUserDto
     ): Promise<ExpenseWithSharesResponseDto> {
@@ -24,11 +24,11 @@ export class ExpenseController {
     }
 
     @Get(':id')
-    async findOne(@Param('id') id: number): Promise<ExpenseWithSharesResponseDto> {
+    async getHouseExpenseById(@Param('id') id: number): Promise<ExpenseWithSharesResponseDto> {
         return await this.expenseUseCase.getExpenseById(id);
     }
 
-    @Get('house/:houseId')
+    @Get('by-house/:houseId')
     async getExpensesByHouseId(
         @Param('houseId') houseId: number,
         @Query('startDate') startDate?: string,
@@ -44,18 +44,18 @@ export class ExpenseController {
         return await this.expenseUseCase.getExpensesByHouseId(houseId);
     }
 
-    @Get('roomie/:roomieId')
+    @Get('by-roomie/:roomieId')
     async getExpensesByRoomieId(@Param('roomieId') roomieId: number): Promise<ExpenseWithSharesResponseDto[]> {
         return await this.expenseUseCase.getExpensesByRoomieId(roomieId);
     }
 
-    @Get('house/:houseId/summary')
+    @Get('summary/:houseId')
     async getExpenseSummaryByHouse(@Param('houseId') houseId: number): Promise<ExpenseSummaryResponseDto[]> {
         return await this.expenseUseCase.getExpenseSummaryByHouse(houseId);
     }
 
     @Put(':id')
-    async update(
+    async updateHouseExpense(
         @Param('id') id: number,
         @Body() updateExpenseDto: ExpenseUpdateRequestDto,
         @User() user: AuthenticatedUserDto
@@ -64,7 +64,7 @@ export class ExpenseController {
     }
 
     @Delete(':id')
-    async remove(
+    async deleteHouseExpense(
         @Param('id') id: number,
         @User() user: AuthenticatedUserDto
     ): Promise<void> {
