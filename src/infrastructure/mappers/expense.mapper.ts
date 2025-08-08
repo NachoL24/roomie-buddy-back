@@ -7,9 +7,9 @@ export class ExpenseMapper {
             dbExpense.id,
             Number(dbExpense.amount),
             dbExpense.date,
-            dbExpense.paidBy.id,
+            dbExpense.paidBy?.id || 0,
             dbExpense.createdAt,
-            dbExpense.house.id,
+            dbExpense.house?.id,
             dbExpense.description,
             dbExpense.updatedAt,
             dbExpense.deletedAt

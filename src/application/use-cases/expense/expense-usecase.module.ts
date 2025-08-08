@@ -4,6 +4,7 @@ import { PersonalExpenseUseCase } from './personal-expense.use_case';
 import { ExpenseRepositoryModule } from 'src/infrastructure/database/repositories/expense-repository.module';
 import { ExpenseShareRepositoryModule } from 'src/infrastructure/database/repositories/expense-share-repository.module';
 import { RoomieHouseRepositoryModule } from 'src/infrastructure/database/repositories/roomie-house-repository.module';
+import { RoomieRepositoryModule } from 'src/infrastructure/database/repositories/roomie-repository.module';
 import { IncomeRepositoryModule } from 'src/infrastructure/database/repositories/income-repository.module';
 import { PersonalFinanceSyncService } from 'src/application/services/personal-finance-sync.service';
 
@@ -12,6 +13,7 @@ import { PersonalFinanceSyncService } from 'src/application/services/personal-fi
         ExpenseRepositoryModule,
         ExpenseShareRepositoryModule,
         RoomieHouseRepositoryModule,
+        RoomieRepositoryModule,
         IncomeRepositoryModule
     ],
     providers: [

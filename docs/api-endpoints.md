@@ -404,9 +404,43 @@ GET /expenses/personal/:id
 ```
 **Descripción:** Solo retorna el gasto si pertenece al usuario autenticado.
 
-### 4. Resumen de gastos personales
+### 4. Resumen financiero personal completo
 ```http
 GET /expenses/personal/summary
+GET /expenses/personal/summary?startDate=2025-01-01&endDate=2025-01-31
+```
+
+**Descripción:** Obtiene un resumen financiero personal completo que incluye gastos e ingresos del período (por defecto el mes actual), más el saldo total acumulado.
+
+**Parámetros opcionales:**
+- `startDate`: Fecha de inicio (formato: YYYY-MM-DD). Por defecto: primer día del mes actual
+- `endDate`: Fecha de fin (formato: YYYY-MM-DD). Por defecto: fecha actual
+
+**Respuesta:**
+```json
+{
+  "currentMonthExpenses": 45600,
+  "currentMonthIncome": 85000,
+  "currentMonthBalance": 39400,
+  "totalBalance": 127800,
+  "periodStartDate": "2025-08-01T00:00:00.000Z",
+  "periodEndDate": "2025-08-08T23:59:59.999Z",
+  "expenseCount": 12,
+  "incomeCount": 3
+}
+```
+
+**Campos explicados:**
+- `currentMonthExpenses`: Total de gastos personales del período
+- `currentMonthIncome`: Total de ingresos personales del período  
+- `currentMonthBalance`: Balance del período (ingresos - gastos)
+- `totalBalance`: Balance acumulado total (todos los ingresos - todos los gastos personales)
+- `expenseCount`: Cantidad de gastos en el período
+- `incomeCount`: Cantidad de ingresos en el período
+
+### 5. Resumen simple de gastos personales
+```http
+GET /expenses/personal/summary/simple
 ```
 
 **Respuesta:**
@@ -418,12 +452,12 @@ GET /expenses/personal/summary
 }
 ```
 
-### 5. Gastos personales por rango de fechas
+### 6. Gastos personales por rango de fechas
 ```http
 GET /expenses/personal/date-range?startDate=2025-01-01&endDate=2025-01-31
 ```
 
-### 6. Actualizar gasto personal
+### 7. Actualizar gasto personal
 ```http
 PUT /expenses/personal/:id
 ```
@@ -436,7 +470,7 @@ PUT /expenses/personal/:id
 }
 ```
 
-### 7. Eliminar gasto personal
+### 8. Eliminar gasto personal
 ```http
 DELETE /expenses/personal/:id
 ```
@@ -1019,7 +1053,7 @@ interface PersonalExpenseCreateRequestDto {
   description?: string;
   amount: number;
   date: Date;
-  // paidById se asigna automáticamente
+  // paidById se asigna automáticamente del usuario autenticado
 }
 
 interface PersonalExpenseUpdateRequestDto {
@@ -1043,6 +1077,17 @@ interface PersonalExpenseSummaryResponseDto {
   totalExpenses: number;
   expenseCount: number;
   averageExpense: number;
+}
+
+interface PersonalFinancialSummaryResponseDto {
+  currentMonthExpenses: number;
+  currentMonthIncome: number;
+  currentMonthBalance: number;
+  totalBalance: number;
+  periodStartDate: Date;
+  periodEndDate: Date;
+  expenseCount: number;
+  incomeCount: number;
 }
 ```
 
@@ -1216,6 +1261,7 @@ class PersonalExpenseService {
   async createPersonalExpense(data: PersonalExpenseCreateRequestDto): Promise<PersonalExpenseResponseDto>
   async getPersonalExpenses(): Promise<PersonalExpenseResponseDto[]>
   async getPersonalExpenseById(id: number): Promise<PersonalExpenseResponseDto>
+  async getPersonalFinancialSummary(startDate?: string, endDate?: string): Promise<PersonalFinancialSummaryResponseDto>
   async getPersonalExpenseSummary(): Promise<PersonalExpenseSummaryResponseDto>
   async getPersonalExpensesByDateRange(startDate: string, endDate: string): Promise<PersonalExpenseResponseDto[]>
   async updatePersonalExpense(id: number, data: PersonalExpenseUpdateRequestDto): Promise<PersonalExpenseResponseDto>
@@ -1283,7 +1329,8 @@ class PersonalExpenseService {
 ### 💳 **Control Financiero Personal**
 - `POST /expenses/personal` - Crear gasto personal
 - `GET /expenses/personal` - Mis gastos personales
-- `GET /expenses/personal/summary` - Resumen personal
+- `GET /expenses/personal/summary` - **Resumen financiero completo** (gastos, ingresos, saldo del mes)
+- `GET /expenses/personal/summary/simple` - Resumen simple de gastos
 - `GET /expenses/personal/date-range` - Gastos por fecha
 
 ### 💵 **Gestión de Ingresos**

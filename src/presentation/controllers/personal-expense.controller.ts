@@ -5,6 +5,7 @@ import { PersonalExpenseUseCase } from 'src/application/use-cases/expense/person
 import { PersonalExpenseCreateRequestDto } from 'src/presentation/dtos/expense/personal-expense-create.request.dto';
 import { PersonalExpenseUpdateRequestDto } from 'src/presentation/dtos/expense/personal-expense-update.request.dto';
 import { PersonalExpenseResponseDto } from 'src/presentation/dtos/expense/personal-expense.response.dto';
+import { PersonalFinancialSummaryResponseDto } from 'src/presentation/dtos/expense/personal-financial-summary.response.dto';
 import { User } from 'src/presentation/decorators/user.decorator';
 import { AuthenticatedUserDto } from 'src/application/dto/user/authenticated-user.dto';
 
@@ -20,23 +21,32 @@ export class PersonalExpenseController {
         @Body() createExpenseDto: PersonalExpenseCreateRequestDto,
         @User() user: AuthenticatedUserDto
     ): Promise<PersonalExpenseResponseDto> {
-        // Asegurar que el gasto se cree para el usuario autenticado
-        createExpenseDto.paidById = parseInt(user.sub);
-        return await this.personalExpenseUseCase.createPersonalExpense(createExpenseDto);
+        return await this.personalExpenseUseCase.createPersonalExpenseByAuth0Sub(createExpenseDto, user.sub);
     }
 
     @Get()
     async getPersonalExpenses(
         @User() user: AuthenticatedUserDto
     ): Promise<PersonalExpenseResponseDto[]> {
-        return await this.personalExpenseUseCase.getPersonalExpensesByUserId(parseInt(user.sub));
+        return await this.personalExpenseUseCase.getPersonalExpensesByAuth0Sub(user.sub);
     }
 
     @Get('summary')
+    async getPersonalFinancialSummary(
+        @User() user: AuthenticatedUserDto,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string
+    ): Promise<PersonalFinancialSummaryResponseDto> {
+        const start = startDate ? new Date(startDate) : undefined;
+        const end = endDate ? new Date(endDate) : undefined;
+        return await this.personalExpenseUseCase.getPersonalFinancialSummaryByAuth0Sub(user.sub, start, end);
+    }
+
+    @Get('summary/simple')
     async getPersonalExpenseSummary(
         @User() user: AuthenticatedUserDto
     ): Promise<{ totalExpenses: number; expenseCount: number; averageExpense: number }> {
-        return await this.personalExpenseUseCase.getPersonalExpenseSummary(parseInt(user.sub));
+        return await this.personalExpenseUseCase.getPersonalExpenseSummaryByAuth0Sub(user.sub);
     }
 
     @Get('date-range')
@@ -47,7 +57,7 @@ export class PersonalExpenseController {
     ): Promise<PersonalExpenseResponseDto[]> {
         const start = new Date(startDate);
         const end = new Date(endDate);
-        return await this.personalExpenseUseCase.getPersonalExpensesByDateRange(parseInt(user.sub), start, end);
+        return await this.personalExpenseUseCase.getPersonalExpensesByDateRangeAndAuth0Sub(user.sub, start, end);
     }
 
     @Get(':id')
@@ -55,7 +65,7 @@ export class PersonalExpenseController {
         @Param('id', ParseIntPipe) expenseId: number,
         @User() user: AuthenticatedUserDto
     ): Promise<PersonalExpenseResponseDto> {
-        return await this.personalExpenseUseCase.getPersonalExpenseById(expenseId, parseInt(user.sub));
+        return await this.personalExpenseUseCase.getPersonalExpenseByIdAndAuth0Sub(expenseId, user.sub);
     }
 
     @Put(':id')
@@ -64,7 +74,7 @@ export class PersonalExpenseController {
         @Body() updateExpenseDto: PersonalExpenseUpdateRequestDto,
         @User() user: AuthenticatedUserDto
     ): Promise<PersonalExpenseResponseDto> {
-        return await this.personalExpenseUseCase.updatePersonalExpense(expenseId, parseInt(user.sub), updateExpenseDto);
+        return await this.personalExpenseUseCase.updatePersonalExpenseByAuth0Sub(expenseId, user.sub, updateExpenseDto);
     }
 
     @Delete(':id')
@@ -72,6 +82,6 @@ export class PersonalExpenseController {
         @Param('id', ParseIntPipe) expenseId: number,
         @User() user: AuthenticatedUserDto
     ): Promise<void> {
-        await this.personalExpenseUseCase.deletePersonalExpense(expenseId, parseInt(user.sub));
+        await this.personalExpenseUseCase.deletePersonalExpenseByAuth0Sub(expenseId, user.sub);
     }
 }
