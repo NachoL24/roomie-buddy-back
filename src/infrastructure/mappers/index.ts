@@ -4,3 +4,4 @@ export * from './expense.mapper';
 export * from './expense-share.mapper';
 export * from './roomie-house.mapper';
 export * from './invitation.mapper';
+export * from './income.mapper';

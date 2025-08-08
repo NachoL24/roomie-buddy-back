@@ -1,72 +1,121 @@
 import { Injectable } from '@nestjs/common';
-import { Income } from 'src/domain/entities/income.entity';
-import { IncomeRepository } from 'src/domain/repositories/income.repository';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, Between } from 'typeorm';
+import { Income as DomainIncome } from '../../../domain/entities/income.entity';
+import { IncomeRepository } from '../../../domain/repositories/income.repository';
+import { Income as DbIncome } from '../entities/income.db-entity';
+import { IncomeMapper } from '../../mappers/income.mapper';
 
 @Injectable()
-export class IncomeRepositoryImpl implements IncomeRepository {
-    private incomes: Income[] = [];
-    private currentId = 1;
+export class TypeOrmIncomeRepository implements IncomeRepository {
+    constructor(
+        @InjectRepository(DbIncome)
+        private readonly incomeRepository: Repository<DbIncome>
+    ) { }
 
-    async findById(id: number): Promise<Income | null> {
-        return this.incomes.find(income => income.id === id) || null;
+    async findById(id: number): Promise<DomainIncome | null> {
+        const dbIncome = await this.incomeRepository.findOne({
+            where: { id },
+            relations: ['earnedBy', 'house']
+        });
+        return dbIncome ? IncomeMapper.toDomain(dbIncome) : null;
     }
 
-    async findAll(): Promise<Income[]> {
-        return [...this.incomes];
+    async findAll(): Promise<DomainIncome[]> {
+        const dbIncomes = await this.incomeRepository.find({
+            relations: ['earnedBy', 'house']
+        });
+        return IncomeMapper.toDomainArray(dbIncomes);
     }
 
-    async findByHouseId(houseId: number): Promise<Income[]> {
-        return this.incomes.filter(income => income.houseId === houseId);
+    async findByHouseId(houseId: number): Promise<DomainIncome[]> {
+        const dbIncomes = await this.incomeRepository.find({
+            where: { house: { id: houseId } },
+            relations: ['earnedBy', 'house']
+        });
+        return IncomeMapper.toDomainArray(dbIncomes);
     }
 
-    async findByEarnedById(earnedById: number): Promise<Income[]> {
-        return this.incomes.filter(income => income.earnedById === earnedById);
+    async findByEarnedById(earnedById: number): Promise<DomainIncome[]> {
+        const dbIncomes = await this.incomeRepository.find({
+            where: { earnedBy: { id: earnedById } },
+            relations: ['earnedBy', 'house']
+        });
+        return IncomeMapper.toDomainArray(dbIncomes);
     }
 
-    async findByHouseIdAndDateRange(houseId: number, startDate: Date, endDate: Date): Promise<Income[]> {
-        return this.incomes.filter(income =>
-            income.houseId === houseId &&
-            income.earnedAt >= startDate &&
-            income.earnedAt <= endDate
-        );
+    async findByHouseIdAndDateRange(houseId: number, startDate: Date, endDate: Date): Promise<DomainIncome[]> {
+        const dbIncomes = await this.incomeRepository.find({
+            where: {
+                house: { id: houseId },
+                earnedAt: Between(startDate, endDate)
+            },
+            relations: ['earnedBy', 'house']
+        });
+        return IncomeMapper.toDomainArray(dbIncomes);
     }
 
-    async findRecurringIncomes(): Promise<Income[]> {
-        return this.incomes.filter(income => income.isRecurring);
+    async findRecurringIncomes(): Promise<DomainIncome[]> {
+        const dbIncomes = await this.incomeRepository.find({
+            where: { isRecurring: true },
+            relations: ['earnedBy', 'house']
+        });
+        return IncomeMapper.toDomainArray(dbIncomes);
     }
 
-    async save(income: Income): Promise<Income> {
-        const incomeWithId = Income.create(
-            income.description,
-            income.amount,
-            income.earnedById,
-            income.houseId,
-            income.earnedAt,
-            this.currentId++,
-            income.isRecurring,
-            income.recurrenceFrequency,
-            income.nextRecurrenceDate,
-            income.createdAt
-        );
+    async save(income: DomainIncome): Promise<DomainIncome> {
+        const dbIncome = IncomeMapper.toDatabase(income);
 
-        this.incomes.push(incomeWithId);
-        return incomeWithId;
+        // Set relations manually
+        if (income.earnedById) {
+            dbIncome.earnedBy = { id: income.earnedById } as any;
+        }
+        if (income.houseId) {
+            dbIncome.house = { id: income.houseId } as any;
+        }
+
+        const savedDbIncome = await this.incomeRepository.save(dbIncome);
+
+        // Fetch the complete entity with relations
+        const completeIncome = await this.incomeRepository.findOne({
+            where: { id: savedDbIncome.id },
+            relations: ['earnedBy', 'house']
+        });
+
+        return IncomeMapper.toDomain(completeIncome!);
     }
 
-    async update(income: Income): Promise<Income> {
-        const index = this.incomes.findIndex(existing => existing.id === income.id);
-        if (index === -1) {
+    async update(income: DomainIncome): Promise<DomainIncome> {
+        const existingDbIncome = await this.incomeRepository.findOne({
+            where: { id: income.id }
+        });
+
+        if (!existingDbIncome) {
             throw new Error(`Income with ID ${income.id} not found`);
         }
 
-        this.incomes[index] = income;
-        return income;
+        const dbIncome = IncomeMapper.toDatabase(income);
+
+        // Set relations manually
+        if (income.earnedById) {
+            dbIncome.earnedBy = { id: income.earnedById } as any;
+        }
+        if (income.houseId) {
+            dbIncome.house = { id: income.houseId } as any;
+        }
+
+        const savedDbIncome = await this.incomeRepository.save(dbIncome);
+
+        // Fetch the complete entity with relations
+        const completeIncome = await this.incomeRepository.findOne({
+            where: { id: savedDbIncome.id },
+            relations: ['earnedBy', 'house']
+        });
+
+        return IncomeMapper.toDomain(completeIncome!);
     }
 
     async delete(id: number): Promise<void> {
-        const index = this.incomes.findIndex(income => income.id === id);
-        if (index !== -1) {
-            this.incomes.splice(index, 1);
-        }
+        await this.incomeRepository.delete(id);
     }
 }

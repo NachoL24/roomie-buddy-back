@@ -291,6 +291,7 @@ export class PersonalExpenseUseCase {
 
         // Obtener ingresos personales del período (ingresos sin houseId)
         const allIncomes = await this.incomeRepository.findByEarnedById(userId);
+        
         const personalIncomes = allIncomes.filter(income =>
             income.houseId === null || income.houseId === undefined
         );
