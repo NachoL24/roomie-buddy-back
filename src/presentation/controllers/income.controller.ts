@@ -68,19 +68,17 @@ export class IncomeController {
     }
 
     /**
-     * Obtener resumen financiero (ingresos vs gastos)
-     * GET /incomes/financial-summary/:houseId?period=MONTHLY&startDate=...&endDate=...
+     * Obtener resumen financiero personal (ingresos vs gastos)
+     * GET /incomes/financial-summary?period=MONTHLY&startDate=...&endDate=...
      */
-    @Get('financial-summary/:houseId')
+    @Get('financial-summary')
     async getFinancialSummary(
-        @Param('houseId') houseId: number,
         @User() user: AuthenticatedUserDto,
         @Query('period') period?: 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'CUSTOM',
         @Query('startDate') startDate?: string,
         @Query('endDate') endDate?: string
     ): Promise<FinancialSummaryResponseDto> {
         return await this.incomeUseCase.getFinancialSummary(
-            houseId,
             user.sub,
             period || 'MONTHLY',
             startDate ? new Date(startDate) : undefined,

@@ -1,13 +1,12 @@
 import { Inject, Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { Income } from "src/domain/entities/income.entity";
-import { IncomeRepository, RoomieRepository, RoomieHouseRepository, ExpenseRepository } from "src/domain/repositories";
+import { IncomeRepository, RoomieRepository, ExpenseRepository } from "src/domain/repositories";
 import { IncomeCreateRequestDto } from "src/presentation/dtos/income/income-create.request.dto";
 import { IncomeUpdateRequestDto } from "src/presentation/dtos/income/income-update.request.dto";
 import { IncomeResponseDto } from "src/presentation/dtos/income/income.response.dto";
 import { FinancialSummaryResponseDto, MonthlyTrendDto } from "src/presentation/dtos/income/financial-summary.response.dto";
 import { INCOME_REPOSITORY } from "src/infrastructure/database/repositories/income-repository.module";
 import { ROOMIE_REPOSITORY } from "src/infrastructure/database/repositories/roomie-repository.module";
-import { ROOMIE_HOUSE_REPOSITORY } from "src/infrastructure/database/repositories/roomie-house-repository.module";
 import { EXPENSE_REPOSITORY } from "src/infrastructure/database/repositories/expense-repository.module";
 
 @Injectable()
@@ -16,7 +15,6 @@ export class IncomeUseCase {
     constructor(
         @Inject(INCOME_REPOSITORY) private readonly incomeRepository: IncomeRepository,
         @Inject(ROOMIE_REPOSITORY) private readonly roomieRepository: RoomieRepository,
-        @Inject(ROOMIE_HOUSE_REPOSITORY) private readonly roomieHouseRepository: RoomieHouseRepository,
         @Inject(EXPENSE_REPOSITORY) private readonly expenseRepository: ExpenseRepository
     ) { }
 
@@ -27,23 +25,17 @@ export class IncomeUseCase {
             throw new NotFoundException(`User with auth0Sub ${auth0Sub} not found`);
         }
 
-        // Validar que el roomie es miembro activo de la casa
-        const membership = await this.roomieHouseRepository.findByRoomieAndHouse(roomie.id, createIncomeDto.houseId);
-        if (!membership) {
-            throw new BadRequestException(`Roomie ${roomie.id} is not an active member of house ${createIncomeDto.houseId}`);
-        }
-
         // Validar cantidad positiva
         if (createIncomeDto.amount <= 0) {
             throw new BadRequestException('Income amount must be positive');
         }
 
-        // Crear el income
+        // Crear el income personal (sin casa asociada)
         const income = Income.create(
             createIncomeDto.description,
             createIncomeDto.amount,
             roomie.id,
-            createIncomeDto.houseId,
+            undefined, // Los ingresos son personales, no asociados a una casa
             createIncomeDto.earnedAt,
             undefined, // id se asigna automáticamente
             createIncomeDto.isRecurring || false,
@@ -165,7 +157,6 @@ export class IncomeUseCase {
     }
 
     async getFinancialSummary(
-        houseId: number,
         auth0Sub: string,
         periodType: 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'CUSTOM' = 'MONTHLY',
         startDate?: Date,
@@ -177,33 +168,31 @@ export class IncomeUseCase {
             throw new NotFoundException(`User with auth0Sub ${auth0Sub} not found`);
         }
 
-        // Validar que el roomie es miembro de la casa
-        const membership = await this.roomieHouseRepository.findByRoomieAndHouse(roomie.id, houseId);
-        if (!membership) {
-            throw new BadRequestException(`Roomie ${roomie.id} is not an active member of house ${houseId}`);
-        }
-
         // Calcular fechas del período
         const { start, end } = this.calculatePeriodDates(periodType, startDate, endDate);
 
-        // Obtener ingresos del período
-        const incomes = await this.incomeRepository.findByHouseIdAndDateRange(houseId, start, end);
-        const roomieIncomes = incomes.filter(income => income.earnedById === roomie.id);
+        // Obtener ingresos personales del período
+        const allIncomes = await this.incomeRepository.findByEarnedById(roomie.id);
+        const incomes = allIncomes.filter(income =>
+            income.earnedAt >= start && income.earnedAt <= end
+        );
 
-        // Obtener gastos del período
-        const expenses = await this.expenseRepository.findByHouseIdAndDateRange(houseId, start, end);
-        const roomieExpenses = expenses.filter(expense => expense.paidById === roomie.id);
+        // Obtener gastos personales del período
+        const allExpenses = await this.expenseRepository.findByPaidById(roomie.id);
+        const expenses = allExpenses.filter(expense =>
+            expense.date >= start && expense.date <= end
+        );
 
         // Calcular totales
-        const totalIncome = roomieIncomes.reduce((sum, income) => sum + income.amount, 0);
-        const totalExpenses = roomieExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+        const totalIncome = incomes.reduce((sum, income) => sum + income.amount, 0);
+        const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
 
         // Agrupar por descripción (top 5)
-        const topIncomeDescriptions = this.getTopDescriptions(roomieIncomes);
-        const topExpenseDescriptions = this.getTopDescriptions(roomieExpenses);
+        const topIncomeDescriptions = this.getTopDescriptions(incomes);
+        const topExpenseDescriptions = this.getTopDescriptions(expenses);
 
         // Calcular tendencia mensual si es necesario
-        const monthlyTrend = periodType !== 'MONTHLY' ? this.calculateMonthlyTrend(roomieIncomes, roomieExpenses, start, end) : undefined;
+        const monthlyTrend = periodType !== 'MONTHLY' ? this.calculateMonthlyTrend(incomes, expenses, start, end) : undefined;
 
         return FinancialSummaryResponseDto.create(
             totalIncome,

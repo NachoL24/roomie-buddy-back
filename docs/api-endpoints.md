@@ -1096,7 +1096,7 @@ interface PersonalFinancialSummaryResponseDto {
 interface IncomeCreateRequestDto {
   description: string;
   amount: number;
-  houseId?: number;
+  // houseId se asigna automáticamente como null para ingresos personales
   isRecurring?: boolean;
   recurrenceFrequency?: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
   earnedAt?: Date;
@@ -1107,7 +1107,7 @@ interface IncomeResponseDto {
   description: string;
   amount: number;
   earnedById: number;
-  houseId?: number;
+  houseId?: number; // Siempre null para ingresos personales
   isRecurring: boolean;
   recurrenceFrequency?: string;
   nextRecurrenceDate?: Date;
