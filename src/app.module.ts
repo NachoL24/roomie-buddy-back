@@ -15,6 +15,7 @@ import { ExpenseController } from './presentation/controllers/expense.controller
 import { PersonalExpenseController } from './presentation/controllers/personal-expense.controller';
 import { SettlementController } from './presentation/controllers/settlement.controller';
 import { IncomeController } from './presentation/controllers/income.controller';
+import { FinancialActivityController } from './presentation/controllers/financial-activity.controller';
 
 @Module({
   imports: [
@@ -28,7 +29,7 @@ import { IncomeController } from './presentation/controllers/income.controller';
     RepositoriesModule,
     UseCasesModule,
   ],
-  controllers: [AppController, UserController, HouseController, InvitationController, ExpenseController, PersonalExpenseController, SettlementController, IncomeController],
+  controllers: [AppController, UserController, HouseController, InvitationController, ExpenseController, PersonalExpenseController, SettlementController, IncomeController, FinancialActivityController],
   providers: [AppService],
 })
 export class AppModule { }

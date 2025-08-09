@@ -9,4 +9,5 @@ export interface ExpenseRepository {
     findByPaidById(paidById: number): Promise<Expense[]>;
     findByDateRange(startDate: Date, endDate: Date): Promise<Expense[]>;
     findByHouseIdAndDateRange(houseId: number, startDate: Date, endDate: Date): Promise<Expense[]>;
+    findByPaidByIdPaginated(paidById: number, page: number, pageSize: number): Promise<{ expenses: Expense[], totalCount: number }>;
 }

@@ -10,4 +10,5 @@ export interface IncomeRepository {
     save(income: Income): Promise<Income>;
     update(income: Income): Promise<Income>;
     delete(id: number): Promise<void>;
+    findByEarnedByIdPaginated(earnedById: number, page: number, pageSize: number): Promise<{ incomes: Income[], totalCount: number }>;
 }

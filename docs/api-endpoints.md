@@ -330,6 +330,84 @@ GET /expenses/house/summary/:houseId
 ]
 ```
 
+---
+
+## 📊 **Financial Activities (Actividades Financieras)**
+
+### 1. Obtener todas las actividades financieras (gastos e ingresos)
+```http
+GET /financial-activities?page=1&pageSize=10
+```
+**Descripción:** Obtiene todos los gastos personales e ingresos del usuario autenticado, unidos y ordenados por fecha (más reciente primero), con paginación.
+
+**Parámetros de Query:**
+- `page` (opcional): Número de página (por defecto: 1)
+- `pageSize` (opcional): Tamaño de página (por defecto: 10, máximo: 100)
+
+**Respuesta:**
+```json
+{
+  "activities": [
+    {
+      "id": 1,
+      "type": "income",
+      "description": "Sueldo Software Developer - Enero 2025",
+      "amount": 85000,
+      "date": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "type": "expense",
+      "description": "Almuerzo trabajo",
+      "amount": 1200,
+      "date": "2025-01-15T12:00:00.000Z"
+    }
+  ],
+  "totalCount": 25,
+  "page": 1,
+  "pageSize": 10,
+  "totalPages": 3,
+  "hasNextPage": true,
+  "hasPreviousPage": false
+}
+```
+
+**Campos de la respuesta:**
+- `activities`: Array de actividades financieras
+  - `id`: ID único de la actividad
+  - `type`: Tipo de actividad ("expense" o "income")
+  - `description`: Descripción de la actividad
+  - `amount`: Monto de la actividad
+  - `date`: Fecha del gasto o ingreso
+- `totalCount`: Número total de actividades
+- `page`: Página actual
+- `pageSize`: Tamaño de página utilizado
+- `totalPages`: Total de páginas disponibles
+- `hasNextPage`: Indica si hay una página siguiente
+- `hasPreviousPage`: Indica si hay una página anterior
+
+---
+
+**Respuesta:**
+```json
+[
+  {
+    "roomieId": 1,
+    "totalPaid": 25000,
+    "totalOwed": 15000,
+    "balance": 10000,
+    "expenseCount": 3
+  },
+  {
+    "roomieId": 2,
+    "totalPaid": 10000,
+    "totalOwed": 15000,
+    "balance": -5000,
+    "expenseCount": 3
+  }
+]
+```
+
 ### 7. Actualizar gasto de casa
 ```http
 PUT /expenses/house/:id

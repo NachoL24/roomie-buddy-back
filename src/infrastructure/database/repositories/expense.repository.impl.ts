@@ -88,4 +88,19 @@ export class TypeOrmExpenseRepository implements ExpenseRepository {
         });
         return ExpenseMapper.toDomainArray(dbExpenses);
     }
+
+    async findByPaidByIdPaginated(paidById: number, page: number, pageSize: number): Promise<{ expenses: DomainExpense[], totalCount: number }> {
+        const [dbExpenses, totalCount] = await this.expenseRepository.findAndCount({
+            where: { paidBy: { id: paidById } },
+            relations: ['paidBy', 'house'],
+            order: { date: 'DESC' }, // Order by date descending (most recent first)
+            skip: (page - 1) * pageSize,
+            take: pageSize
+        });
+
+        return {
+            expenses: ExpenseMapper.toDomainArray(dbExpenses),
+            totalCount
+        };
+    }
 }

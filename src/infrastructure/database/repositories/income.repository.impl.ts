@@ -118,4 +118,19 @@ export class TypeOrmIncomeRepository implements IncomeRepository {
     async delete(id: number): Promise<void> {
         await this.incomeRepository.delete(id);
     }
+
+    async findByEarnedByIdPaginated(earnedById: number, page: number, pageSize: number): Promise<{ incomes: DomainIncome[], totalCount: number }> {
+        const [dbIncomes, totalCount] = await this.incomeRepository.findAndCount({
+            where: { earnedBy: { id: earnedById } },
+            relations: ['earnedBy', 'house'],
+            order: { earnedAt: 'DESC' }, // Order by earnedAt descending (most recent first)
+            skip: (page - 1) * pageSize,
+            take: pageSize
+        });
+
+        return {
+            incomes: IncomeMapper.toDomainArray(dbIncomes),
+            totalCount
+        };
+    }
 }

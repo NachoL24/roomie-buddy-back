@@ -5,9 +5,10 @@ import { InvitationUseCaseModule } from './invitation/invitation-usecase.module'
 import { ExpenseUseCaseModule } from './expense/expense-usecase.module';
 import { SettlementUseCaseModule } from './settlement/settlement-usecase.module';
 import { IncomeUseCaseModule } from './income/income-usecase.module';
+import { FinancialActivityUseCaseModule } from './financial-activity/financial-activity-usecase.module';
 
 @Module({
-    imports: [UserUseCaseModule, HouseUseCaseModule, InvitationUseCaseModule, ExpenseUseCaseModule, SettlementUseCaseModule, IncomeUseCaseModule],
-    exports: [UserUseCaseModule, HouseUseCaseModule, InvitationUseCaseModule, ExpenseUseCaseModule, SettlementUseCaseModule, IncomeUseCaseModule],
+    imports: [UserUseCaseModule, HouseUseCaseModule, InvitationUseCaseModule, ExpenseUseCaseModule, SettlementUseCaseModule, IncomeUseCaseModule, FinancialActivityUseCaseModule],
+    exports: [UserUseCaseModule, HouseUseCaseModule, InvitationUseCaseModule, ExpenseUseCaseModule, SettlementUseCaseModule, IncomeUseCaseModule, FinancialActivityUseCaseModule],
 })
 export class UseCasesModule { }
