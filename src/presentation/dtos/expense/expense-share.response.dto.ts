@@ -3,5 +3,6 @@ export class ExpenseShareResponseDto {
     expenseId: number;
     roomieId: number;
     roomieName: string;
+    roomiePicture?: string;
     shareAmount: number;
 }

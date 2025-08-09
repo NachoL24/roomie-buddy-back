@@ -1,8 +1,8 @@
 import { Inject, Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
-import { EXPENSE_REPOSITORY, EXPENSE_SHARE_REPOSITORY, ROOMIE_HOUSE_REPOSITORY } from "src/infrastructure/database/repositories";
+import { EXPENSE_REPOSITORY, EXPENSE_SHARE_REPOSITORY, ROOMIE_HOUSE_REPOSITORY, ROOMIE_REPOSITORY } from "src/infrastructure/database/repositories";
 import { Expense } from "src/domain/entities/expense.entity";
 import { ExpenseShare } from "src/domain/entities/expense-share.entity";
-import { ExpenseRepository, ExpenseShareRepository, RoomieHouseRepository } from "src/domain/repositories";
+import { ExpenseRepository, ExpenseShareRepository, RoomieHouseRepository, RoomieRepository } from "src/domain/repositories";
 import { ExpenseCreateRequestDto } from "src/presentation/dtos/expense/expense-create.request.dto";
 import { ExpenseUpdateRequestDto } from "src/presentation/dtos/expense/expense-update.request.dto";
 import { ExpenseResponseDto } from "src/presentation/dtos/expense/expense.response.dto";
@@ -18,6 +18,7 @@ export class ExpenseUseCase {
         @Inject(EXPENSE_REPOSITORY) private readonly expenseRepository: ExpenseRepository,
         @Inject(EXPENSE_SHARE_REPOSITORY) private readonly expenseShareRepository: ExpenseShareRepository,
         @Inject(ROOMIE_HOUSE_REPOSITORY) private readonly roomieHouseRepository: RoomieHouseRepository,
+        @Inject(ROOMIE_REPOSITORY) private readonly roomieRepository: RoomieRepository,
         private readonly personalFinanceSyncService: PersonalFinanceSyncService,
     ) { }
 
@@ -68,7 +69,7 @@ export class ExpenseUseCase {
         // Sincronizar con finanzas personales
         await this.personalFinanceSyncService.syncExpenseToPersonalFinances(savedExpense);
 
-        return this.mapToExpenseWithSharesResponse(savedExpense, expenseShares);
+        return await this.mapToExpenseWithSharesResponse(savedExpense, expenseShares);
     }
 
     async getExpenseById(expenseId: number): Promise<ExpenseWithSharesResponseDto> {
@@ -78,7 +79,7 @@ export class ExpenseUseCase {
         }
 
         const expenseShares = await this.expenseShareRepository.findByExpenseId(expenseId);
-        return this.mapToExpenseWithSharesResponse(expense, expenseShares);
+        return await this.mapToExpenseWithSharesResponse(expense, expenseShares);
     }
 
     async getExpensesByHouseId(houseId: number): Promise<ExpenseWithSharesResponseDto[]> {
@@ -154,11 +155,11 @@ export class ExpenseUseCase {
             // Crear nuevas expense shares (ya validadas anteriormente)
             const newExpenseShares = await this.createExpenseShares(savedExpense.id, updateExpenseDto.expenseShares);
 
-            return this.mapToExpenseWithSharesResponse(savedExpense, newExpenseShares);
+            return await this.mapToExpenseWithSharesResponse(savedExpense, newExpenseShares);
         } else {
             // Mantener las expense shares existentes
             const expenseShares = await this.expenseShareRepository.findByExpenseId(expenseId);
-            return this.mapToExpenseWithSharesResponse(savedExpense, expenseShares);
+            return await this.mapToExpenseWithSharesResponse(savedExpense, expenseShares);
         }
     }
 
@@ -336,7 +337,7 @@ export class ExpenseUseCase {
         return savedShares;
     }
 
-    private mapToExpenseWithSharesResponse(expense: Expense, expenseShares: ExpenseShare[]): ExpenseWithSharesResponseDto {
+    private async mapToExpenseWithSharesResponse(expense: Expense, expenseShares: ExpenseShare[]): Promise<ExpenseWithSharesResponseDto> {
         const response = new ExpenseWithSharesResponseDto();
         response.id = expense.id;
         response.description = expense.description;
@@ -346,10 +347,24 @@ export class ExpenseUseCase {
         response.updatedAt = expense.updatedAt;
         response.paidById = expense.paidById;
         response.houseId = expense.houseId ?? 0; // Default to 0 if undefined, though this shouldn't happen for house expenses
+
+        // Enriquecer shares con el nombre del roomie
+        const uniqueRoomieIds = Array.from(new Set(expenseShares.map(s => s.roomieId)));
+        const roomies = await Promise.all(uniqueRoomieIds.map(id => this.roomieRepository.findById(id)));
+        const idToName = new Map<number, string>();
+        const idToPicture = new Map<number, string | undefined>();
+        uniqueRoomieIds.forEach((id, idx) => {
+            const r = roomies[idx];
+            idToName.set(id, r ? r.fullName : '');
+            idToPicture.set(id, r ? r.picture : undefined);
+        });
+
         response.expenseShares = expenseShares.map(share => ({
             id: share.id,
             expenseId: share.expenseId,
             roomieId: share.roomieId,
+            roomieName: idToName.get(share.roomieId) || '',
+            roomiePicture: idToPicture.get(share.roomieId),
             shareAmount: share.shareAmount
         }));
         return response;
