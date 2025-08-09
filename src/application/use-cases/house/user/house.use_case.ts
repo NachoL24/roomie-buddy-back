@@ -45,7 +45,13 @@ export class HouseUseCase {
         return HouseWithMembersResponseDto.create(house, members);
     }
 
-    async createHouse(createHouse: HouseCreateDto): Promise<HouseResponseDto> {
+    async createHouse(createHouse: HouseCreateDto, auth0Sub: string): Promise<HouseResponseDto> {
+        // Resolver el creador usando el sub de Auth0
+        const creator = await this.roomieRepository.findByAuth0Sub(auth0Sub);
+        if (!creator) {
+            throw new NotFoundException('User not found');
+        }
+
         // Crear la casa
         const newHouse = House.create(createHouse);
         const savedHouse = await this.houseRepository.save(newHouse);
@@ -53,11 +59,11 @@ export class HouseUseCase {
             throw new Error("Failed to create house");
         }
 
-        // Crear la relación RoomieHouse con el creador
+        // Crear la relación RoomieHouse con el creador (payRatio 100% por defecto)
         const roomieHouse = RoomieHouse.create(
-            createHouse.createdBy,
+            creator.id,
             savedHouse.id,
-            1.0 // El creador tiene ratio de pago completo por defecto
+            1.0
         );
 
         await this.roomieHouseRepository.save(roomieHouse);
@@ -156,15 +162,20 @@ export class HouseUseCase {
         return UpdatePayRatiosResponseDto.create(updatedMembers);
     }
 
-    async updateHouseName(houseId: number, updateNameDto: HouseUpdateNameRequestDto, userId: string): Promise<HouseResponseDto> {
+    async updateHouseName(houseId: number, updateNameDto: HouseUpdateNameRequestDto, auth0Sub: string): Promise<HouseResponseDto> {
         // Verificar que la casa existe
         const existingHouse = await this.houseRepository.findById(houseId);
         if (!existingHouse) {
             throw new NotFoundException(`House with ID ${houseId} not found`);
         }
 
-        // Verificar que el usuario es miembro de la casa
-        const userMembership = await this.roomieHouseRepository.findByRoomieAndHouse(parseInt(userId), houseId);
+        // Resolver usuario y verificar que es miembro de la casa
+        const user = await this.roomieRepository.findByAuth0Sub(auth0Sub);
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        const userMembership = await this.roomieHouseRepository.findByRoomieAndHouse(user.id, houseId);
         if (!userMembership) {
             throw new BadRequestException(`User is not a member of house ${houseId}`);
         }
@@ -176,15 +187,20 @@ export class HouseUseCase {
         return HouseResponseDto.create(savedHouse);
     }
 
-    async leaveHouse(houseId: number, userId: string): Promise<void> {
+    async leaveHouse(houseId: number, auth0Sub: string): Promise<void> {
         // Verificar que la casa existe
         const existingHouse = await this.houseRepository.findById(houseId);
         if (!existingHouse) {
             throw new NotFoundException(`House with ID ${houseId} not found`);
         }
 
-        // Verificar que el usuario es miembro de la casa
-        const userMembership = await this.roomieHouseRepository.findByRoomieAndHouse(parseInt(userId), houseId);
+        // Resolver usuario y verificar que es miembro de la casa
+        const user = await this.roomieRepository.findByAuth0Sub(auth0Sub);
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        const userMembership = await this.roomieHouseRepository.findByRoomieAndHouse(user.id, houseId);
         if (!userMembership) {
             throw new BadRequestException(`User is not a member of house ${houseId}`);
         }
@@ -196,7 +212,7 @@ export class HouseUseCase {
         }
 
         // Eliminar la membresía del usuario
-        await this.roomieHouseRepository.delete(parseInt(userId), houseId);
+        await this.roomieHouseRepository.delete(user.id, houseId);
     }
 
     async removeMemberFromHouse(houseId: number, roomieIdToRemove: number, adminAuth0Sub: string): Promise<RemoveMemberResponseDto> {

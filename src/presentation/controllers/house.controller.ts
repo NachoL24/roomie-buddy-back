@@ -29,8 +29,11 @@ export class HouseController {
     }
 
     @Post()
-    create(@Body() createHouseDto: HouseCreateDto) {
-        return this.houseUseCase.createHouse(createHouseDto);
+    create(
+        @Body() createHouseDto: HouseCreateDto,
+        @User() user: AuthenticatedUserDto,
+    ) {
+        return this.houseUseCase.createHouse(createHouseDto, user.sub);
     }
 
     /**
