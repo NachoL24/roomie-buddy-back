@@ -104,21 +104,36 @@ export class ExpenseUseCase {
             this.settlementRepository.findByHouseId(houseId)
         ]);
 
-        // Map expenses to activity DTOs (no houseName required here)
-        const expenseActivities = expenses.map(e => FinancialActivityResponseDto.fromExpense(e, null));
-
-        // Map settlements including recipient names
-        const toIds = Array.from(new Set(settlements.map(s => s.toRoomieId)));
-        const toRoomies = await Promise.all(toIds.map(id => this.roomieRepository.findById(id)));
-        const toIdToName = new Map<number, string>();
-        toIds.forEach((id, idx) => {
-            const r = toRoomies[idx];
-            toIdToName.set(id, r ? r.fullName : 'miembro');
+        // Map expenses to activity DTOs with payer info
+        const paidByIds = Array.from(new Set(expenses.map(e => e.paidById)));
+        const paidByRoomies = await Promise.all(paidByIds.map(id => this.roomieRepository.findById(id)));
+        const paidByMap = new Map<number, { name?: string; picture?: string }>();
+        paidByIds.forEach((id, idx) => {
+            const r = paidByRoomies[idx];
+            paidByMap.set(id, { name: r?.fullName, picture: r?.picture });
+        });
+        const expenseActivities = expenses.map(e => {
+            const payer = paidByMap.get(e.paidById);
+            return FinancialActivityResponseDto.fromExpense(e, null, payer?.name, payer?.picture);
         });
 
-        const settlementActivities = settlements.map(s =>
-            FinancialActivityResponseDto.fromSettlement(s, null, toIdToName.get(s.toRoomieId) ?? 'miembro')
-        );
+        // Map settlements including recipient names and payer info (fromRoomie)
+        const toIds = Array.from(new Set(settlements.map(s => s.toRoomieId)));
+        const fromIds = Array.from(new Set(settlements.map(s => s.fromRoomieId)));
+        const [toRoomies, fromRoomies] = await Promise.all([
+            Promise.all(toIds.map(id => this.roomieRepository.findById(id))),
+            Promise.all(fromIds.map(id => this.roomieRepository.findById(id)))
+        ]);
+        const toIdToName = new Map<number, string>();
+        toIds.forEach((id, idx) => { const r = toRoomies[idx]; toIdToName.set(id, r ? r.fullName : 'miembro'); });
+        const fromIdToInfo = new Map<number, { name?: string; picture?: string }>();
+        fromIds.forEach((id, idx) => { const r = fromRoomies[idx]; fromIdToInfo.set(id, { name: r?.fullName, picture: r?.picture }); });
+
+        const settlementActivities = settlements.map(s => {
+            const payer = fromIdToInfo.get(s.fromRoomieId);
+            const toName = toIdToName.get(s.toRoomieId) ?? 'miembro';
+            return FinancialActivityResponseDto.fromSettlement(s, null, toName, payer?.name, payer?.picture);
+        });
 
         const all = [...expenseActivities, ...settlementActivities];
         all.sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -247,20 +262,32 @@ export class ExpenseUseCase {
         const expenses = allExpenses.filter(e => e.date >= startDate && e.date <= endDate);
         const settlements = allSettlements.filter(s => s.createdAt >= startDate && s.createdAt <= endDate);
 
-        // Map
-        const expenseActivities = expenses.map(e => FinancialActivityResponseDto.fromExpense(e, null));
-
-        const toIds = Array.from(new Set(settlements.map(s => s.toRoomieId)));
-        const toRoomies = await Promise.all(toIds.map(id => this.roomieRepository.findById(id)));
-        const toIdToName = new Map<number, string>();
-        toIds.forEach((id, idx) => {
-            const r = toRoomies[idx];
-            toIdToName.set(id, r ? r.fullName : 'miembro');
+        // Map expenses with payer
+        const paidByIds = Array.from(new Set(expenses.map(e => e.paidById)));
+        const paidByRoomies = await Promise.all(paidByIds.map(id => this.roomieRepository.findById(id)));
+        const paidByMap = new Map<number, { name?: string; picture?: string }>();
+        paidByIds.forEach((id, idx) => { const r = paidByRoomies[idx]; paidByMap.set(id, { name: r?.fullName, picture: r?.picture }); });
+        const expenseActivities = expenses.map(e => {
+            const payer = paidByMap.get(e.paidById);
+            return FinancialActivityResponseDto.fromExpense(e, null, payer?.name, payer?.picture);
         });
 
-        const settlementActivities = settlements.map(s =>
-            FinancialActivityResponseDto.fromSettlement(s, null, toIdToName.get(s.toRoomieId) ?? 'miembro')
-        );
+        const toIds = Array.from(new Set(settlements.map(s => s.toRoomieId)));
+        const fromIds = Array.from(new Set(settlements.map(s => s.fromRoomieId)));
+        const [toRoomies2, fromRoomies2] = await Promise.all([
+            Promise.all(toIds.map(id => this.roomieRepository.findById(id))),
+            Promise.all(fromIds.map(id => this.roomieRepository.findById(id)))
+        ]);
+        const toIdToName = new Map<number, string>();
+        toIds.forEach((id, idx) => { const r = toRoomies2[idx]; toIdToName.set(id, r ? r.fullName : 'miembro'); });
+        const fromIdToInfo = new Map<number, { name?: string; picture?: string }>();
+        fromIds.forEach((id, idx) => { const r = fromRoomies2[idx]; fromIdToInfo.set(id, { name: r?.fullName, picture: r?.picture }); });
+
+        const settlementActivities = settlements.map(s => {
+            const payer = fromIdToInfo.get(s.fromRoomieId);
+            const toName = toIdToName.get(s.toRoomieId) ?? 'miembro';
+            return FinancialActivityResponseDto.fromSettlement(s, null, toName, payer?.name, payer?.picture);
+        });
 
         const all = [...expenseActivities, ...settlementActivities];
         all.sort((a, b) => b.date.getTime() - a.date.getTime());

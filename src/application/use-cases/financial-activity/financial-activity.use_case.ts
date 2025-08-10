@@ -61,18 +61,32 @@ export class FinancialActivityUseCase {
             }
         });
 
+        // Build payer info maps
+        const expensePayerIds = Array.from(new Set(personalExpenses.map(e => e.paidById)));
+        const incomeEarnedByIds = Array.from(new Set(incomes.map(i => i.earnedById)));
+        const settlementFromIds = Array.from(new Set(settlements.map(s => s.fromRoomieId)));
+        const uniqueRoomieIds = Array.from(new Set([...expensePayerIds, ...incomeEarnedByIds, ...settlementFromIds]));
+        const payerRoomies = await Promise.all(uniqueRoomieIds.map(id => this.roomieRepository.findById(id)));
+        const idToInfo = new Map<number, { name?: string; picture?: string }>();
+        uniqueRoomieIds.forEach((id, idx) => {
+            const r = payerRoomies[idx];
+            idToInfo.set(id, { name: r?.fullName, picture: r?.picture });
+        });
+
         // Convert to DTOs
         const expenseActivities = personalExpenses.map(expense => {
             const houseName = (expense.houseId !== null && expense.houseId !== undefined)
                 ? (houseIdToNameMap.get(expense.houseId) ?? null)
                 : null;
-            return FinancialActivityResponseDto.fromExpense(expense, houseName);
+            const payer = idToInfo.get(expense.paidById);
+            return FinancialActivityResponseDto.fromExpense(expense, houseName, payer?.name, payer?.picture);
         });
         const incomeActivities = incomes.map(income => {
             const houseName = (income.houseId !== null && income.houseId !== undefined)
                 ? (houseIdToNameMap.get(income.houseId) ?? null)
                 : null;
-            return FinancialActivityResponseDto.fromIncome(income, houseName);
+            const earner = idToInfo.get(income.earnedById);
+            return FinancialActivityResponseDto.fromIncome(income, houseName, earner?.name, earner?.picture);
         });
 
         // Map toRoomieId -> full name for settlements
@@ -87,7 +101,8 @@ export class FinancialActivityUseCase {
         const settlementActivities = settlements.map(s => {
             const houseName = houseIdToNameMap.get(s.houseId) ?? null;
             const toName = toIdToName.get(s.toRoomieId) ?? 'miembro';
-            return FinancialActivityResponseDto.fromSettlement(s, houseName, toName);
+            const payer = idToInfo.get(s.fromRoomieId);
+            return FinancialActivityResponseDto.fromSettlement(s, houseName, toName, payer?.name, payer?.picture);
         });
 
 
@@ -152,19 +167,33 @@ export class FinancialActivityUseCase {
         const houseIdToNameMap = new Map<number, string>();
         houses.forEach(h => { if (h) houseIdToNameMap.set(h.id, h.name); });
 
+        // Build payer info maps
+        const expensePayerIds = Array.from(new Set(allExpenses.map(e => e.paidById)));
+        const incomeEarnedByIds = Array.from(new Set(allIncomes.map(i => i.earnedById)));
+        const settlementFromIds = Array.from(new Set(allSettlements.map(s => s.fromRoomieId)));
+        const uniqueRoomieIds = Array.from(new Set([...expensePayerIds, ...incomeEarnedByIds, ...settlementFromIds]));
+        const payerRoomies = await Promise.all(uniqueRoomieIds.map(id => this.roomieRepository.findById(id)));
+        const idToInfo = new Map<number, { name?: string; picture?: string }>();
+        uniqueRoomieIds.forEach((id, idx) => {
+            const r = payerRoomies[idx];
+            idToInfo.set(id, { name: r?.fullName, picture: r?.picture });
+        });
+
         // Convert to DTOs with house names when available
         const expenseActivities = allExpenses.map(expense => {
             const houseName = (expense.houseId !== null && expense.houseId !== undefined)
                 ? (houseIdToNameMap.get(expense.houseId) ?? null)
                 : null;
-            return FinancialActivityResponseDto.fromExpense(expense, houseName);
+            const payer = idToInfo.get(expense.paidById);
+            return FinancialActivityResponseDto.fromExpense(expense, houseName, payer?.name, payer?.picture);
         });
 
         const incomeActivities = allIncomes.map(income => {
             const houseName = (income.houseId !== null && income.houseId !== undefined)
                 ? (houseIdToNameMap.get(income.houseId) ?? null)
                 : null;
-            return FinancialActivityResponseDto.fromIncome(income, houseName);
+            const earner = idToInfo.get(income.earnedById);
+            return FinancialActivityResponseDto.fromIncome(income, houseName, earner?.name, earner?.picture);
         });
 
         // Map toRoomieId -> full name for settlements
@@ -179,7 +208,8 @@ export class FinancialActivityUseCase {
         const settlementActivities = allSettlements.map(s => {
             const houseName = houseIdToNameMap.get(s.houseId) ?? null;
             const toName = allToIdToName.get(s.toRoomieId) ?? 'miembro';
-            return FinancialActivityResponseDto.fromSettlement(s, houseName, toName);
+            const payer = idToInfo.get(s.fromRoomieId);
+            return FinancialActivityResponseDto.fromSettlement(s, houseName, toName, payer?.name, payer?.picture);
         });
 
         // Combine and sort by date (most recent first)

@@ -15,8 +15,8 @@ import { SettlementRepositoryModule } from 'src/infrastructure/database/reposito
         ExpenseShareRepositoryModule,
         RoomieHouseRepositoryModule,
         RoomieRepositoryModule,
-    IncomeRepositoryModule,
-    SettlementRepositoryModule
+        IncomeRepositoryModule,
+        SettlementRepositoryModule
     ],
     providers: [
         ExpenseUseCase,

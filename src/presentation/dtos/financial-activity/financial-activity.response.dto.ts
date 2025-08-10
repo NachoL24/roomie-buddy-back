@@ -10,6 +10,9 @@ export class FinancialActivityResponseDto {
     description?: string;
     amount: number;
     date: Date; // Date when expense was made or income was earned
+    // Enrichment: payer details for UI
+    paidByName?: string;
+    paidByPicture?: string;
 
     constructor(
         id: number,
@@ -18,7 +21,9 @@ export class FinancialActivityResponseDto {
         houseName: string | null,
         amount: number,
         date: Date,
-        description?: string
+        description?: string,
+        paidByName?: string,
+        paidByPicture?: string
     ) {
         this.id = id;
         this.type = type;
@@ -27,9 +32,11 @@ export class FinancialActivityResponseDto {
         this.amount = amount;
         this.date = date;
         this.description = description;
+        this.paidByName = paidByName;
+        this.paidByPicture = paidByPicture;
     }
 
-    public static fromExpense(expense: Expense, houseName: string | null): FinancialActivityResponseDto {
+    public static fromExpense(expense: Expense, houseName: string | null, paidByName?: string, paidByPicture?: string): FinancialActivityResponseDto {
         return new FinancialActivityResponseDto(
             expense.id,
             'expense',
@@ -37,11 +44,13 @@ export class FinancialActivityResponseDto {
             houseName,
             expense.amount,
             expense.date,
-            expense.description
+            expense.description,
+            paidByName,
+            paidByPicture
         );
     }
 
-    public static fromIncome(income: Income, houseName: string | null): FinancialActivityResponseDto {
+    public static fromIncome(income: Income, houseName: string | null, paidByName?: string, paidByPicture?: string): FinancialActivityResponseDto {
         return new FinancialActivityResponseDto(
             income.id,
             'income',
@@ -49,14 +58,18 @@ export class FinancialActivityResponseDto {
             houseName,
             income.amount,
             income.earnedAt,
-            income.description
+            income.description,
+            paidByName,
+            paidByPicture
         );
     }
 
     public static fromSettlement(
         settlement: Settlement,
         houseName: string | null,
-        toRoomieName?: string
+        toRoomieName?: string,
+        paidByName?: string,
+        paidByPicture?: string
     ): FinancialActivityResponseDto {
         const base = `Transferencia a ${toRoomieName ?? 'miembro'}`;
         const description = settlement.description && settlement.description.trim().length > 0
@@ -69,7 +82,9 @@ export class FinancialActivityResponseDto {
             houseName,
             settlement.amount,
             settlement.createdAt,
-            description
+            description,
+            paidByName,
+            paidByPicture
         );
     }
 }
