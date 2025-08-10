@@ -1,6 +1,6 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { EXPENSE_REPOSITORY, HOUSE_REPO_TOKEN, INCOME_REPOSITORY, ROOMIE_REPOSITORY } from "src/infrastructure/database/repositories";
-import { ExpenseRepository, HouseRepository, IncomeRepository, RoomieRepository } from "src/domain/repositories";
+import { EXPENSE_REPOSITORY, HOUSE_REPO_TOKEN, INCOME_REPOSITORY, ROOMIE_REPOSITORY, SETTLEMENT_REPOSITORY } from "src/infrastructure/database/repositories";
+import { ExpenseRepository, HouseRepository, IncomeRepository, RoomieRepository, SettlementRepository } from "src/domain/repositories";
 import { FinancialActivityResponseDto } from "src/presentation/dtos/financial-activity/financial-activity.response.dto";
 import { PaginatedFinancialActivitiesResponseDto } from "src/presentation/dtos/financial-activity/paginated-financial-activities.response.dto";
 
@@ -11,6 +11,7 @@ export class FinancialActivityUseCase {
         @Inject(EXPENSE_REPOSITORY) private readonly expenseRepository: ExpenseRepository,
         @Inject(INCOME_REPOSITORY) private readonly incomeRepository: IncomeRepository,
         @Inject(ROOMIE_REPOSITORY) private readonly roomieRepository: RoomieRepository,
+        @Inject(SETTLEMENT_REPOSITORY) private readonly settlementRepository: SettlementRepository,
         @Inject(HOUSE_REPO_TOKEN) private readonly houseRepository: HouseRepository
     ) { }
 
@@ -40,8 +41,15 @@ export class FinancialActivityUseCase {
         // Get paginated incomes
         const { incomes, totalCount: incomeCount } = await this.incomeRepository.findByEarnedByIdPaginated(user.id, page, pageSize);
 
+        // Get settlements involving the user (no pagination here; we merge later)
+        const settlements = await this.settlementRepository.findByRoomieId(user.id);
+
         // Get house information for activities
-        const houseIds = [...new Set([...personalExpenses.map(expense => expense.houseId), ...incomes.map(income => income.houseId)])];
+        const houseIds = [...new Set([
+            ...personalExpenses.map(expense => expense.houseId),
+            ...incomes.map(income => income.houseId),
+            ...settlements.map(s => s.houseId)
+        ])];
         // Fetch house names for the activities
         const houses = houseIds.length > 0 ? await Promise.all(houseIds.filter(id => id !== null && id !== undefined).map(id => this.houseRepository.findById(id))) : [];
 
@@ -67,9 +75,14 @@ export class FinancialActivityUseCase {
             return FinancialActivityResponseDto.fromIncome(income, houseName);
         });
 
+        const settlementActivities = settlements.map(s => {
+            const houseName = houseIdToNameMap.get(s.houseId) ?? null;
+            return FinancialActivityResponseDto.fromSettlement(s, houseName);
+        });
+
 
         // Combine and sort by date (most recent first)
-        const allActivities = [...expenseActivities, ...incomeActivities];
+        const allActivities = [...expenseActivities, ...incomeActivities, ...settlementActivities];
         allActivities.sort((a, b) => b.date.getTime() - a.date.getTime());
 
         // For proper pagination with combined data, we need to implement a different approach
@@ -77,7 +90,7 @@ export class FinancialActivityUseCase {
         // This is a simplified implementation - for production with large datasets, 
         // consider implementing a unified query or using a different pagination strategy
 
-        const totalCount = expenseCount + incomeCount;
+        const totalCount = expenseCount + incomeCount + settlements.length;
         const startIndex = (page - 1) * pageSize;
         const endIndex = startIndex + pageSize;
         const paginatedActivities = allActivities.slice(startIndex, endIndex);
@@ -113,11 +126,13 @@ export class FinancialActivityUseCase {
         // Get all expenses and incomes (both personal and house)
         const allExpenses = await this.expenseRepository.findByPaidById(user.id);
         const allIncomes = await this.incomeRepository.findByEarnedById(user.id);
+        const allSettlements = await this.settlementRepository.findByRoomieId(user.id);
 
         // Build houseId -> name map for any activity that references a house
         const houseIds = Array.from(new Set([
             ...allExpenses.map(e => e.houseId),
-            ...allIncomes.map(i => i.houseId)
+            ...allIncomes.map(i => i.houseId),
+            ...allSettlements.map(s => s.houseId)
         ])).filter((id): id is number => id !== null && id !== undefined);
 
         const houses = houseIds.length > 0
@@ -142,8 +157,13 @@ export class FinancialActivityUseCase {
             return FinancialActivityResponseDto.fromIncome(income, houseName);
         });
 
+        const settlementActivities = allSettlements.map(s => {
+            const houseName = houseIdToNameMap.get(s.houseId) ?? null;
+            return FinancialActivityResponseDto.fromSettlement(s, houseName);
+        });
+
         // Combine and sort by date (most recent first)
-        const allActivities = [...expenseActivities, ...incomeActivities];
+        const allActivities = [...expenseActivities, ...incomeActivities, ...settlementActivities];
         allActivities.sort((a, b) => b.date.getTime() - a.date.getTime());
 
         // Apply pagination

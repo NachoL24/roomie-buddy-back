@@ -1,18 +1,19 @@
 import { Expense } from "src/domain/entities/expense.entity";
 import { Income } from "src/domain/entities/income.entity";
+import { Settlement } from "src/domain/entities/settlement.entity";
 
 export class FinancialActivityResponseDto {
     id: number;
-    type: 'expense' | 'income';
+    type: 'expense' | 'income' | 'settlement';
     personal: boolean;
-    houseName: string | null;   
+    houseName: string | null;
     description?: string;
     amount: number;
     date: Date; // Date when expense was made or income was earned
 
     constructor(
         id: number,
-        type: 'expense' | 'income',
+        type: 'expense' | 'income' | 'settlement',
         personal: boolean,
         houseName: string | null,
         amount: number,
@@ -49,6 +50,18 @@ export class FinancialActivityResponseDto {
             income.amount,
             income.earnedAt,
             income.description
+        );
+    }
+
+    public static fromSettlement(settlement: Settlement, houseName: string | null): FinancialActivityResponseDto {
+        return new FinancialActivityResponseDto(
+            settlement.id,
+            'settlement',
+            false, // settlements siempre pertenecen a una casa
+            houseName,
+            settlement.amount,
+            settlement.createdAt,
+            settlement.description
         );
     }
 }
