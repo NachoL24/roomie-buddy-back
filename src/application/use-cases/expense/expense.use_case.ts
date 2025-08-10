@@ -132,7 +132,16 @@ export class ExpenseUseCase {
         const settlementActivities = settlements.map(s => {
             const payer = fromIdToInfo.get(s.fromRoomieId);
             const toName = toIdToName.get(s.toRoomieId) ?? 'miembro';
-            return FinancialActivityResponseDto.fromSettlement(s, null, toName, payer?.name, payer?.picture);
+            const toRoomie = toRoomies[toIds.indexOf(s.toRoomieId)];
+            return FinancialActivityResponseDto.fromSettlement(
+                s,
+                null,
+                toName,
+                payer?.name,
+                payer?.picture,
+                toRoomie?.fullName,
+                toRoomie?.picture
+            );
         });
 
         const all = [...expenseActivities, ...settlementActivities];
@@ -286,7 +295,16 @@ export class ExpenseUseCase {
         const settlementActivities = settlements.map(s => {
             const payer = fromIdToInfo.get(s.fromRoomieId);
             const toName = toIdToName.get(s.toRoomieId) ?? 'miembro';
-            return FinancialActivityResponseDto.fromSettlement(s, null, toName, payer?.name, payer?.picture);
+            const toRoomie = toRoomies2[toIds.indexOf(s.toRoomieId)];
+            return FinancialActivityResponseDto.fromSettlement(
+                s,
+                null,
+                toName,
+                payer?.name,
+                payer?.picture,
+                toRoomie?.fullName,
+                toRoomie?.picture
+            );
         });
 
         const all = [...expenseActivities, ...settlementActivities];

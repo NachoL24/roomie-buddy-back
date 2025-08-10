@@ -13,6 +13,9 @@ export class FinancialActivityResponseDto {
     // Enrichment: payer details for UI
     paidByName?: string;
     paidByPicture?: string;
+    // Enrichment: settlement recipient details for UI
+    paidToName?: string;
+    paidToPicture?: string;
 
     constructor(
         id: number,
@@ -23,7 +26,9 @@ export class FinancialActivityResponseDto {
         date: Date,
         description?: string,
         paidByName?: string,
-        paidByPicture?: string
+        paidByPicture?: string,
+        paidToName?: string,
+        paidToPicture?: string
     ) {
         this.id = id;
         this.type = type;
@@ -34,6 +39,8 @@ export class FinancialActivityResponseDto {
         this.description = description;
         this.paidByName = paidByName;
         this.paidByPicture = paidByPicture;
+        this.paidToName = paidToName;
+        this.paidToPicture = paidToPicture;
     }
 
     public static fromExpense(expense: Expense, houseName: string | null, paidByName?: string, paidByPicture?: string): FinancialActivityResponseDto {
@@ -69,7 +76,9 @@ export class FinancialActivityResponseDto {
         houseName: string | null,
         toRoomieName?: string,
         paidByName?: string,
-        paidByPicture?: string
+        paidByPicture?: string,
+        paidToName?: string,
+        paidToPicture?: string
     ): FinancialActivityResponseDto {
         const base = `Transferencia a ${toRoomieName ?? 'miembro'}`;
         const description = settlement.description && settlement.description.trim().length > 0
@@ -84,7 +93,9 @@ export class FinancialActivityResponseDto {
             settlement.createdAt,
             description,
             paidByName,
-            paidByPicture
+            paidByPicture,
+            paidToName,
+            paidToPicture
         );
     }
 }

@@ -102,7 +102,16 @@ export class FinancialActivityUseCase {
             const houseName = houseIdToNameMap.get(s.houseId) ?? null;
             const toName = toIdToName.get(s.toRoomieId) ?? 'miembro';
             const payer = idToInfo.get(s.fromRoomieId);
-            return FinancialActivityResponseDto.fromSettlement(s, houseName, toName, payer?.name, payer?.picture);
+            const toRoomie = toRoomies[toIds.indexOf(s.toRoomieId)];
+            return FinancialActivityResponseDto.fromSettlement(
+                s,
+                houseName,
+                toName,
+                payer?.name,
+                payer?.picture,
+                toRoomie?.fullName,
+                toRoomie?.picture
+            );
         });
 
 
@@ -209,7 +218,16 @@ export class FinancialActivityUseCase {
             const houseName = houseIdToNameMap.get(s.houseId) ?? null;
             const toName = allToIdToName.get(s.toRoomieId) ?? 'miembro';
             const payer = idToInfo.get(s.fromRoomieId);
-            return FinancialActivityResponseDto.fromSettlement(s, houseName, toName, payer?.name, payer?.picture);
+            const toRoomie = allToRoomies[allToIds.indexOf(s.toRoomieId)];
+            return FinancialActivityResponseDto.fromSettlement(
+                s,
+                houseName,
+                toName,
+                payer?.name,
+                payer?.picture,
+                toRoomie?.fullName,
+                toRoomie?.picture
+            );
         });
 
         // Combine and sort by date (most recent first)
