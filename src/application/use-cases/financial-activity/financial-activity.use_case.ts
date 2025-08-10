@@ -75,9 +75,19 @@ export class FinancialActivityUseCase {
             return FinancialActivityResponseDto.fromIncome(income, houseName);
         });
 
+        // Map toRoomieId -> full name for settlements
+        const toIds = Array.from(new Set(settlements.map(s => s.toRoomieId)));
+        const toRoomies = await Promise.all(toIds.map(id => this.roomieRepository.findById(id)));
+        const toIdToName = new Map<number, string>();
+        toIds.forEach((id, idx) => {
+            const r = toRoomies[idx];
+            toIdToName.set(id, r ? r.fullName : 'miembro');
+        });
+
         const settlementActivities = settlements.map(s => {
             const houseName = houseIdToNameMap.get(s.houseId) ?? null;
-            return FinancialActivityResponseDto.fromSettlement(s, houseName);
+            const toName = toIdToName.get(s.toRoomieId) ?? 'miembro';
+            return FinancialActivityResponseDto.fromSettlement(s, houseName, toName);
         });
 
 
@@ -157,9 +167,19 @@ export class FinancialActivityUseCase {
             return FinancialActivityResponseDto.fromIncome(income, houseName);
         });
 
+        // Map toRoomieId -> full name for settlements
+        const allToIds = Array.from(new Set(allSettlements.map(s => s.toRoomieId)));
+        const allToRoomies = await Promise.all(allToIds.map(id => this.roomieRepository.findById(id)));
+        const allToIdToName = new Map<number, string>();
+        allToIds.forEach((id, idx) => {
+            const r = allToRoomies[idx];
+            allToIdToName.set(id, r ? r.fullName : 'miembro');
+        });
+
         const settlementActivities = allSettlements.map(s => {
             const houseName = houseIdToNameMap.get(s.houseId) ?? null;
-            return FinancialActivityResponseDto.fromSettlement(s, houseName);
+            const toName = allToIdToName.get(s.toRoomieId) ?? 'miembro';
+            return FinancialActivityResponseDto.fromSettlement(s, houseName, toName);
         });
 
         // Combine and sort by date (most recent first)

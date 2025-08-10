@@ -53,15 +53,23 @@ export class FinancialActivityResponseDto {
         );
     }
 
-    public static fromSettlement(settlement: Settlement, houseName: string | null): FinancialActivityResponseDto {
+    public static fromSettlement(
+        settlement: Settlement,
+        houseName: string | null,
+        toRoomieName?: string
+    ): FinancialActivityResponseDto {
+        const base = `Transferencia a ${toRoomieName ?? 'miembro'}`;
+        const description = settlement.description && settlement.description.trim().length > 0
+            ? `${base}: ${settlement.description}`
+            : base;
         return new FinancialActivityResponseDto(
             settlement.id,
             'settlement',
-            false, // settlements siempre pertenecen a una casa
+            false,
             houseName,
             settlement.amount,
             settlement.createdAt,
-            settlement.description
+            description
         );
     }
 }
