@@ -7,6 +7,7 @@ import { RoomieHouseRepositoryModule } from 'src/infrastructure/database/reposit
 import { RoomieRepositoryModule } from 'src/infrastructure/database/repositories/roomie-repository.module';
 import { IncomeRepositoryModule } from 'src/infrastructure/database/repositories/income-repository.module';
 import { PersonalFinanceSyncService } from 'src/application/services/personal-finance-sync.service';
+import { SettlementRepositoryModule } from 'src/infrastructure/database/repositories/settlement-repository.module';
 
 @Module({
     imports: [
@@ -14,7 +15,8 @@ import { PersonalFinanceSyncService } from 'src/application/services/personal-fi
         ExpenseShareRepositoryModule,
         RoomieHouseRepositoryModule,
         RoomieRepositoryModule,
-        IncomeRepositoryModule
+    IncomeRepositoryModule,
+    SettlementRepositoryModule
     ],
     providers: [
         ExpenseUseCase,

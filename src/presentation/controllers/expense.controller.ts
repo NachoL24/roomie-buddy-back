@@ -7,6 +7,7 @@ import { ExpenseUseCase } from "src/application/use-cases/expense/expense.use_ca
 import { ExpenseCreateRequestDto } from "../dtos/expense/expense-create.request.dto";
 import { ExpenseUpdateRequestDto } from "../dtos/expense/expense-update.request.dto";
 import { ExpenseWithSharesResponseDto } from "../dtos/expense/expense-with-shares.response.dto";
+import { FinancialActivityResponseDto } from "../dtos/financial-activity/financial-activity.response.dto";
 import { ExpenseSummaryResponseDto } from "../dtos/expense/expense-summary.response.dto";
 
 @Controller('expenses/house')
@@ -29,19 +30,16 @@ export class ExpenseController {
     }
 
     @Get('by-house/:houseId')
-    async getExpensesByHouseId(
-        @Param('houseId') houseId: number,
+    async getByHouse(
+        @Param('houseId') houseId: string,
         @Query('startDate') startDate?: string,
-        @Query('endDate') endDate?: string
-    ): Promise<ExpenseWithSharesResponseDto[]> {
+        @Query('endDate') endDate?: string,
+    ): Promise<FinancialActivityResponseDto[]> {
+        const houseIdNum = parseInt(houseId, 10);
         if (startDate && endDate) {
-            return await this.expenseUseCase.getExpensesByDateRange(
-                houseId,
-                new Date(startDate),
-                new Date(endDate)
-            );
+            return this.expenseUseCase.getHouseActivitiesByDateRange(houseIdNum, new Date(startDate), new Date(endDate));
         }
-        return await this.expenseUseCase.getExpensesByHouseId(houseId);
+        return this.expenseUseCase.getHouseActivities(houseIdNum);
     }
 
     @Get('by-roomie/:roomieId')

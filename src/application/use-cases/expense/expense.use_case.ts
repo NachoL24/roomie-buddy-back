@@ -1,8 +1,8 @@
 import { Inject, Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
-import { EXPENSE_REPOSITORY, EXPENSE_SHARE_REPOSITORY, ROOMIE_HOUSE_REPOSITORY, ROOMIE_REPOSITORY } from "src/infrastructure/database/repositories";
+import { EXPENSE_REPOSITORY, EXPENSE_SHARE_REPOSITORY, ROOMIE_HOUSE_REPOSITORY, ROOMIE_REPOSITORY, SETTLEMENT_REPOSITORY } from "src/infrastructure/database/repositories";
 import { Expense } from "src/domain/entities/expense.entity";
 import { ExpenseShare } from "src/domain/entities/expense-share.entity";
-import { ExpenseRepository, ExpenseShareRepository, RoomieHouseRepository, RoomieRepository } from "src/domain/repositories";
+import { ExpenseRepository, ExpenseShareRepository, RoomieHouseRepository, RoomieRepository, SettlementRepository } from "src/domain/repositories";
 import { ExpenseCreateRequestDto } from "src/presentation/dtos/expense/expense-create.request.dto";
 import { ExpenseUpdateRequestDto } from "src/presentation/dtos/expense/expense-update.request.dto";
 import { ExpenseResponseDto } from "src/presentation/dtos/expense/expense.response.dto";
@@ -10,6 +10,7 @@ import { ExpenseWithSharesResponseDto } from "src/presentation/dtos/expense/expe
 import { ExpenseShareResponseDto } from "src/presentation/dtos/expense/expense-share.response.dto";
 import { ExpenseSummaryResponseDto } from "src/presentation/dtos/expense/expense-summary.response.dto";
 import { PersonalFinanceSyncService } from "src/application/services/personal-finance-sync.service";
+import { FinancialActivityResponseDto } from "src/presentation/dtos/financial-activity/financial-activity.response.dto";
 
 @Injectable()
 export class ExpenseUseCase {
@@ -19,6 +20,7 @@ export class ExpenseUseCase {
         @Inject(EXPENSE_SHARE_REPOSITORY) private readonly expenseShareRepository: ExpenseShareRepository,
         @Inject(ROOMIE_HOUSE_REPOSITORY) private readonly roomieHouseRepository: RoomieHouseRepository,
         @Inject(ROOMIE_REPOSITORY) private readonly roomieRepository: RoomieRepository,
+        @Inject(SETTLEMENT_REPOSITORY) private readonly settlementRepository: SettlementRepository,
         private readonly personalFinanceSyncService: PersonalFinanceSyncService,
     ) { }
 
@@ -93,6 +95,34 @@ export class ExpenseUseCase {
         );
 
         return expensesWithShares;
+    }
+
+    async getHouseActivities(houseId: number): Promise<FinancialActivityResponseDto[]> {
+        // Fetch house expenses and settlements
+        const [expenses, settlements] = await Promise.all([
+            this.expenseRepository.findByHouseId(houseId),
+            this.settlementRepository.findByHouseId(houseId)
+        ]);
+
+        // Map expenses to activity DTOs (no houseName required here)
+        const expenseActivities = expenses.map(e => FinancialActivityResponseDto.fromExpense(e, null));
+
+        // Map settlements including recipient names
+        const toIds = Array.from(new Set(settlements.map(s => s.toRoomieId)));
+        const toRoomies = await Promise.all(toIds.map(id => this.roomieRepository.findById(id)));
+        const toIdToName = new Map<number, string>();
+        toIds.forEach((id, idx) => {
+            const r = toRoomies[idx];
+            toIdToName.set(id, r ? r.fullName : 'miembro');
+        });
+
+        const settlementActivities = settlements.map(s =>
+            FinancialActivityResponseDto.fromSettlement(s, null, toIdToName.get(s.toRoomieId) ?? 'miembro')
+        );
+
+        const all = [...expenseActivities, ...settlementActivities];
+        all.sort((a, b) => b.date.getTime() - a.date.getTime());
+        return all;
     }
 
     async updateExpense(expenseId: number, updateExpenseDto: ExpenseUpdateRequestDto): Promise<ExpenseWithSharesResponseDto> {
@@ -205,6 +235,36 @@ export class ExpenseUseCase {
         );
 
         return expensesWithShares;
+    }
+
+    async getHouseActivitiesByDateRange(houseId: number, startDate: Date, endDate: Date): Promise<FinancialActivityResponseDto[]> {
+        // Fetch and filter
+        const [allExpenses, allSettlements] = await Promise.all([
+            this.expenseRepository.findByHouseId(houseId),
+            this.settlementRepository.findByHouseId(houseId)
+        ]);
+
+        const expenses = allExpenses.filter(e => e.date >= startDate && e.date <= endDate);
+        const settlements = allSettlements.filter(s => s.createdAt >= startDate && s.createdAt <= endDate);
+
+        // Map
+        const expenseActivities = expenses.map(e => FinancialActivityResponseDto.fromExpense(e, null));
+
+        const toIds = Array.from(new Set(settlements.map(s => s.toRoomieId)));
+        const toRoomies = await Promise.all(toIds.map(id => this.roomieRepository.findById(id)));
+        const toIdToName = new Map<number, string>();
+        toIds.forEach((id, idx) => {
+            const r = toRoomies[idx];
+            toIdToName.set(id, r ? r.fullName : 'miembro');
+        });
+
+        const settlementActivities = settlements.map(s =>
+            FinancialActivityResponseDto.fromSettlement(s, null, toIdToName.get(s.toRoomieId) ?? 'miembro')
+        );
+
+        const all = [...expenseActivities, ...settlementActivities];
+        all.sort((a, b) => b.date.getTime() - a.date.getTime());
+        return all;
     }
 
     async getExpensesByDateRange(houseId: number, startDate: Date, endDate: Date): Promise<ExpenseWithSharesResponseDto[]> {
