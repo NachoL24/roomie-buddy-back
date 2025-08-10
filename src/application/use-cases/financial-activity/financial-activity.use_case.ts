@@ -79,14 +79,14 @@ export class FinancialActivityUseCase {
                 ? (houseIdToNameMap.get(expense.houseId) ?? null)
                 : null;
             const payer = idToInfo.get(expense.paidById);
-            return FinancialActivityResponseDto.fromExpense(expense, houseName, payer?.name, payer?.picture);
+            return FinancialActivityResponseDto.fromExpense(expense, houseName, payer?.name, payer?.picture, expense.paidById);
         });
         const incomeActivities = incomes.map(income => {
             const houseName = (income.houseId !== null && income.houseId !== undefined)
                 ? (houseIdToNameMap.get(income.houseId) ?? null)
                 : null;
             const earner = idToInfo.get(income.earnedById);
-            return FinancialActivityResponseDto.fromIncome(income, houseName, earner?.name, earner?.picture);
+            return FinancialActivityResponseDto.fromIncome(income, houseName, earner?.name, earner?.picture, income.earnedById);
         });
 
         // Map toRoomieId -> full name for settlements
@@ -110,7 +110,9 @@ export class FinancialActivityUseCase {
                 payer?.name,
                 payer?.picture,
                 toRoomie?.fullName,
-                toRoomie?.picture
+                toRoomie?.picture,
+                s.fromRoomieId,
+                s.toRoomieId
             );
         });
 
@@ -194,7 +196,7 @@ export class FinancialActivityUseCase {
                 ? (houseIdToNameMap.get(expense.houseId) ?? null)
                 : null;
             const payer = idToInfo.get(expense.paidById);
-            return FinancialActivityResponseDto.fromExpense(expense, houseName, payer?.name, payer?.picture);
+            return FinancialActivityResponseDto.fromExpense(expense, houseName, payer?.name, payer?.picture, expense.paidById);
         });
 
         const incomeActivities = allIncomes.map(income => {
@@ -202,7 +204,7 @@ export class FinancialActivityUseCase {
                 ? (houseIdToNameMap.get(income.houseId) ?? null)
                 : null;
             const earner = idToInfo.get(income.earnedById);
-            return FinancialActivityResponseDto.fromIncome(income, houseName, earner?.name, earner?.picture);
+            return FinancialActivityResponseDto.fromIncome(income, houseName, earner?.name, earner?.picture, income.earnedById);
         });
 
         // Map toRoomieId -> full name for settlements
@@ -226,7 +228,9 @@ export class FinancialActivityUseCase {
                 payer?.name,
                 payer?.picture,
                 toRoomie?.fullName,
-                toRoomie?.picture
+                toRoomie?.picture,
+                s.fromRoomieId,
+                s.toRoomieId
             );
         });
 

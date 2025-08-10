@@ -16,6 +16,9 @@ export class FinancialActivityResponseDto {
     // Enrichment: settlement recipient details for UI
     paidToName?: string;
     paidToPicture?: string;
+    // IDs to enable direction logic on the client
+    paidById?: number;
+    paidToId?: number;
 
     constructor(
         id: number,
@@ -28,7 +31,9 @@ export class FinancialActivityResponseDto {
         paidByName?: string,
         paidByPicture?: string,
         paidToName?: string,
-        paidToPicture?: string
+        paidToPicture?: string,
+        paidById?: number,
+        paidToId?: number
     ) {
         this.id = id;
         this.type = type;
@@ -41,9 +46,17 @@ export class FinancialActivityResponseDto {
         this.paidByPicture = paidByPicture;
         this.paidToName = paidToName;
         this.paidToPicture = paidToPicture;
+        this.paidById = paidById;
+        this.paidToId = paidToId;
     }
 
-    public static fromExpense(expense: Expense, houseName: string | null, paidByName?: string, paidByPicture?: string): FinancialActivityResponseDto {
+    public static fromExpense(
+        expense: Expense,
+        houseName: string | null,
+        paidByName?: string,
+        paidByPicture?: string,
+        paidById?: number
+    ): FinancialActivityResponseDto {
         return new FinancialActivityResponseDto(
             expense.id,
             'expense',
@@ -53,11 +66,20 @@ export class FinancialActivityResponseDto {
             expense.date,
             expense.description,
             paidByName,
-            paidByPicture
+            paidByPicture,
+            undefined,
+            undefined,
+            paidById
         );
     }
 
-    public static fromIncome(income: Income, houseName: string | null, paidByName?: string, paidByPicture?: string): FinancialActivityResponseDto {
+    public static fromIncome(
+        income: Income,
+        houseName: string | null,
+        paidByName?: string,
+        paidByPicture?: string,
+        paidById?: number
+    ): FinancialActivityResponseDto {
         return new FinancialActivityResponseDto(
             income.id,
             'income',
@@ -67,7 +89,10 @@ export class FinancialActivityResponseDto {
             income.earnedAt,
             income.description,
             paidByName,
-            paidByPicture
+            paidByPicture,
+            undefined,
+            undefined,
+            paidById
         );
     }
 
@@ -78,7 +103,9 @@ export class FinancialActivityResponseDto {
         paidByName?: string,
         paidByPicture?: string,
         paidToName?: string,
-        paidToPicture?: string
+        paidToPicture?: string,
+        paidById?: number,
+        paidToId?: number
     ): FinancialActivityResponseDto {
         const base = `Transferencia a ${toRoomieName ?? 'miembro'}`;
         const description = settlement.description && settlement.description.trim().length > 0
@@ -95,7 +122,9 @@ export class FinancialActivityResponseDto {
             paidByName,
             paidByPicture,
             paidToName,
-            paidToPicture
+            paidToPicture,
+            paidById,
+            paidToId
         );
     }
 }

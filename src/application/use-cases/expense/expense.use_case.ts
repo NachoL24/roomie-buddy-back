@@ -114,7 +114,7 @@ export class ExpenseUseCase {
         });
         const expenseActivities = expenses.map(e => {
             const payer = paidByMap.get(e.paidById);
-            return FinancialActivityResponseDto.fromExpense(e, null, payer?.name, payer?.picture);
+            return FinancialActivityResponseDto.fromExpense(e, null, payer?.name, payer?.picture, e.paidById);
         });
 
         // Map settlements including recipient names and payer info (fromRoomie)
@@ -140,7 +140,9 @@ export class ExpenseUseCase {
                 payer?.name,
                 payer?.picture,
                 toRoomie?.fullName,
-                toRoomie?.picture
+                toRoomie?.picture,
+                s.fromRoomieId,
+                s.toRoomieId
             );
         });
 
@@ -278,7 +280,7 @@ export class ExpenseUseCase {
         paidByIds.forEach((id, idx) => { const r = paidByRoomies[idx]; paidByMap.set(id, { name: r?.fullName, picture: r?.picture }); });
         const expenseActivities = expenses.map(e => {
             const payer = paidByMap.get(e.paidById);
-            return FinancialActivityResponseDto.fromExpense(e, null, payer?.name, payer?.picture);
+            return FinancialActivityResponseDto.fromExpense(e, null, payer?.name, payer?.picture, e.paidById);
         });
 
         const toIds = Array.from(new Set(settlements.map(s => s.toRoomieId)));
@@ -303,7 +305,9 @@ export class ExpenseUseCase {
                 payer?.name,
                 payer?.picture,
                 toRoomie?.fullName,
-                toRoomie?.picture
+                toRoomie?.picture,
+                s.fromRoomieId,
+                s.toRoomieId
             );
         });
 
