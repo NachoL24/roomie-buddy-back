@@ -11,6 +11,10 @@ import { HouseResponseDto } from 'src/presentation/dtos/house/house.response.dto
 
 @Injectable()
 export class UserUseCase {
+    
+    getUserByEmail(email: string): any {
+        return this.roomieRepository.find5ByEmail(email);
+    }
 
     constructor(@Inject(ROOMIE_REPOSITORY) private readonly roomieRepository: RoomieRepository, private readonly auth0UserinfoAdapter: Auth0UserinfoAdapter, private readonly auth0ManagementApiAdapter: Auth0ManagementApiAdapter) { }
 

@@ -27,4 +27,10 @@ export class UserController {
         console.log("UserController - updateUser called for userId:", id, "with data:", dto);
         return this.userUseCase.updateUser(user, dto, id);
     }
+
+    @Get('email/:email')
+    async getUserByEmail(@Param('email') email: string): Promise<any> {
+        console.log("UserController - getUserByEmail called with email:", email);
+        return this.userUseCase.getUserByEmail(email);
+    }
 }

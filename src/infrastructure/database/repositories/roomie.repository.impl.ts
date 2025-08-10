@@ -45,6 +45,15 @@ export class TypeOrmRoomieRepository implements RoomieRepository {
         return dbRoomie ? RoomieMapper.toDomain(dbRoomie) : null;
     }
 
+    async find5ByEmail(email: string): Promise<DomainRoomie[]> {
+        const dbRoomies = await this.roomieRepository
+            .createQueryBuilder('roomie')
+            .where('roomie.email LIKE :email', { email: `${email}%` })
+            .limit(5)
+            .getMany();
+        return RoomieMapper.toDomainArray(dbRoomies);
+    }
+
     async findByHouseId(houseId: number): Promise<DomainRoomie[]> {
         const dbRoomies = await this.roomieRepository
             .createQueryBuilder('roomie')
