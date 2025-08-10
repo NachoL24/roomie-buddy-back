@@ -153,13 +153,13 @@ export class PersonalExpenseUseCase {
 
     async getPersonalExpensesByUserId(userId: number): Promise<PersonalExpenseResponseDto[]> {
         const expenses = await this.expenseRepository.findByPaidById(userId);
-
+        console.log("expenses ", expenses);
         // Filtrar solo gastos personales (sin houseId)
-        const personalExpenses = expenses.filter(expense =>
-            expense.houseId === null || expense.houseId === undefined
-        );
+        // const personalExpenses = expenses.filter(expense =>
+        //     expense.houseId === null || expense.houseId === undefined
+        // );
 
-        return personalExpenses.map(expense => this.mapToPersonalExpenseResponse(expense));
+        return expenses.map(expense => this.mapToPersonalExpenseResponse(expense));
     }
 
     async updatePersonalExpense(

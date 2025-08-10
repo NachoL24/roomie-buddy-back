@@ -1,6 +1,6 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { EXPENSE_REPOSITORY, INCOME_REPOSITORY, ROOMIE_REPOSITORY } from "src/infrastructure/database/repositories";
-import { ExpenseRepository, IncomeRepository, RoomieRepository } from "src/domain/repositories";
+import { EXPENSE_REPOSITORY, HOUSE_REPO_TOKEN, INCOME_REPOSITORY, ROOMIE_REPOSITORY } from "src/infrastructure/database/repositories";
+import { ExpenseRepository, HouseRepository, IncomeRepository, RoomieRepository } from "src/domain/repositories";
 import { FinancialActivityResponseDto } from "src/presentation/dtos/financial-activity/financial-activity.response.dto";
 import { PaginatedFinancialActivitiesResponseDto } from "src/presentation/dtos/financial-activity/paginated-financial-activities.response.dto";
 
@@ -11,6 +11,7 @@ export class FinancialActivityUseCase {
         @Inject(EXPENSE_REPOSITORY) private readonly expenseRepository: ExpenseRepository,
         @Inject(INCOME_REPOSITORY) private readonly incomeRepository: IncomeRepository,
         @Inject(ROOMIE_REPOSITORY) private readonly roomieRepository: RoomieRepository,
+        @Inject(HOUSE_REPO_TOKEN) private readonly houseRepository: HouseRepository
     ) { }
 
     /**
@@ -39,9 +40,33 @@ export class FinancialActivityUseCase {
         // Get paginated incomes
         const { incomes, totalCount: incomeCount } = await this.incomeRepository.findByEarnedByIdPaginated(user.id, page, pageSize);
 
+        // Get house information for activities
+        const houseIds = [...new Set([...personalExpenses.map(expense => expense.houseId), ...incomes.map(income => income.houseId)])];
+        // Fetch house names for the activities
+        const houses = houseIds.length > 0 ? await Promise.all(houseIds.filter(id => id !== null && id !== undefined).map(id => this.houseRepository.findById(id))) : [];
+
+        // Map house IDs to their names
+        const houseIdToNameMap = new Map<number, string>();
+        houses.forEach(house => {
+            if (house) {
+                houseIdToNameMap.set(house.id, house.name);
+            }
+        });
+
         // Convert to DTOs
-        const expenseActivities = personalExpenses.map(expense => FinancialActivityResponseDto.fromExpense(expense));
-        const incomeActivities = incomes.map(income => FinancialActivityResponseDto.fromIncome(income));
+        const expenseActivities = personalExpenses.map(expense => {
+            const houseName = (expense.houseId !== null && expense.houseId !== undefined)
+                ? (houseIdToNameMap.get(expense.houseId) ?? null)
+                : null;
+            return FinancialActivityResponseDto.fromExpense(expense, houseName);
+        });
+        const incomeActivities = incomes.map(income => {
+            const houseName = (income.houseId !== null && income.houseId !== undefined)
+                ? (houseIdToNameMap.get(income.houseId) ?? null)
+                : null;
+            return FinancialActivityResponseDto.fromIncome(income, houseName);
+        });
+
 
         // Combine and sort by date (most recent first)
         const allActivities = [...expenseActivities, ...incomeActivities];
@@ -85,16 +110,37 @@ export class FinancialActivityUseCase {
         if (pageSize < 1) pageSize = 10;
         if (pageSize > 100) pageSize = 100;
 
-        // Get all personal expenses (not house expenses)
+        // Get all expenses and incomes (both personal and house)
         const allExpenses = await this.expenseRepository.findByPaidById(user.id);
-        const personalExpenses = allExpenses.filter(expense => expense.houseId === null || expense.houseId === undefined);
-
-        // Get all personal incomes
         const allIncomes = await this.incomeRepository.findByEarnedById(user.id);
 
-        // Convert to DTOs
-        const expenseActivities = personalExpenses.map(expense => FinancialActivityResponseDto.fromExpense(expense));
-        const incomeActivities = allIncomes.map(income => FinancialActivityResponseDto.fromIncome(income));
+        // Build houseId -> name map for any activity that references a house
+        const houseIds = Array.from(new Set([
+            ...allExpenses.map(e => e.houseId),
+            ...allIncomes.map(i => i.houseId)
+        ])).filter((id): id is number => id !== null && id !== undefined);
+
+        const houses = houseIds.length > 0
+            ? await Promise.all(houseIds.map(id => this.houseRepository.findById(id)))
+            : [];
+
+        const houseIdToNameMap = new Map<number, string>();
+        houses.forEach(h => { if (h) houseIdToNameMap.set(h.id, h.name); });
+
+        // Convert to DTOs with house names when available
+        const expenseActivities = allExpenses.map(expense => {
+            const houseName = (expense.houseId !== null && expense.houseId !== undefined)
+                ? (houseIdToNameMap.get(expense.houseId) ?? null)
+                : null;
+            return FinancialActivityResponseDto.fromExpense(expense, houseName);
+        });
+
+        const incomeActivities = allIncomes.map(income => {
+            const houseName = (income.houseId !== null && income.houseId !== undefined)
+                ? (houseIdToNameMap.get(income.houseId) ?? null)
+                : null;
+            return FinancialActivityResponseDto.fromIncome(income, houseName);
+        });
 
         // Combine and sort by date (most recent first)
         const allActivities = [...expenseActivities, ...incomeActivities];
