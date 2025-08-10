@@ -1,3 +1,4 @@
+import { last } from "rxjs";
 import { House } from "src/domain/entities/house.entity";
 import { RoomieHouse } from "src/domain/entities/roomie-house.entity";
 import { Roomie } from "src/domain/entities/roomie.entity";
@@ -44,19 +45,25 @@ export class HouseWithMembersResponseDto {
 export class HouseMemberDto {
     public readonly roomieId: number;
     public readonly name: string;
+    public readonly lastName: string;
     public readonly email: string;
     public readonly payRatio: number;
+    public readonly picture?: string;
 
     constructor(
         roomieId: number,
         name: string,
+        lastName: string,
         email: string,
-        payRatio: number
+        payRatio: number,
+        picture?: string
     ) {
         this.roomieId = roomieId;
         this.name = name;
+        this.lastName = lastName;
         this.email = email;
         this.payRatio = payRatio;
+        this.picture = picture;
     }
 
     static create(
@@ -66,15 +73,19 @@ export class HouseMemberDto {
         return new HouseMemberDto(
             roomie.id,
             roomie.name,
+            roomie.surname,
             roomie.email,
-            roomieHouse.payRatio || 0
+            roomieHouse.payRatio || 0,
+            roomie.picture,
         );
     }
 
     toJSON() {
         return {
             roomieId: this.roomieId,
+            picture: this.picture,
             name: this.name,
+            lastName: this.lastName,
             email: this.email,
             payRatio: this.payRatio,
             payRatioPercentage: `${(this.payRatio * 100).toFixed(1)}%`
