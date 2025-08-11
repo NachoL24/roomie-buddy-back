@@ -68,9 +68,6 @@ export class ExpenseUseCase {
             expenseShares = await this.createEqualExpenseShares(savedExpense.id, createExpenseDto.amount, createExpenseDto.houseId);
         }
 
-        // Sincronizar con finanzas personales
-        await this.personalFinanceSyncService.syncExpenseToPersonalFinances(savedExpense);
-
         return await this.mapToExpenseWithSharesResponse(savedExpense, expenseShares);
     }
 
