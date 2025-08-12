@@ -1,6 +1,8 @@
 import {
     Entity, PrimaryGeneratedColumn, Column,
-    ManyToOne, CreateDateColumn, Check
+    ManyToOne, CreateDateColumn, Check,
+    DeleteDateColumn,
+    UpdateDateColumn
 } from 'typeorm';
 import { Roomie } from './roomie.db-entity';
 import { House } from './house.db-entity';
@@ -41,4 +43,10 @@ export class Settlement {
 
     @ManyToOne(() => House, house => house.id, { onDelete: 'CASCADE' })
     house: House;
+    
+    @UpdateDateColumn()
+    updatedAt: Date;
+
+    @DeleteDateColumn()
+    deletedAt: Date;
 }

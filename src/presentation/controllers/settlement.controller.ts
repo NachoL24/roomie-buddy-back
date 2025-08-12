@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { ProfileCompletedGuard } from "../guards/profile-completed.guard";
 import { User } from "../decorators/user.decorator";
@@ -66,5 +66,10 @@ export class SettlementController {
         @User() user: AuthenticatedUserDto
     ): Promise<HouseBalanceSummaryResponseDto> {
         return await this.settlementUseCase.getBalanceSummary(user.sub, houseId);
+    }
+
+    @Delete(':id')
+    async deleteSettlement(@Param('id') id: number): Promise<void> {
+        return await this.settlementUseCase.deleteSettlement(id);
     }
 }

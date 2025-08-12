@@ -31,7 +31,7 @@ export class SettlementTypeOrmRepository implements SettlementRepository {
     }
 
     async delete(id: number): Promise<void> {
-        await this.repository.delete(id);
+        await this.repository.softDelete(id);
     }
 
     async findByHouseId(houseId: number): Promise<Settlement[]> {

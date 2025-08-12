@@ -313,4 +313,12 @@ export class SettlementUseCase {
             toRoomie.id
         );
     }
+
+    async deleteSettlement(id: number): Promise<void> {
+        const settlement = await this.settlementRepository.findById(id);
+        if (!settlement) {
+            throw new NotFoundException(`Settlement with ID ${id} not found`);
+        }
+        await this.settlementRepository.delete(id);
+    }
 }
