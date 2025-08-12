@@ -8,6 +8,7 @@ import { ExpenseCreateRequestDto } from "../dtos/expense/expense-create.request.
 import { ExpenseUpdateRequestDto } from "../dtos/expense/expense-update.request.dto";
 import { ExpenseWithSharesResponseDto } from "../dtos/expense/expense-with-shares.response.dto";
 import { FinancialActivityResponseDto } from "../dtos/financial-activity/financial-activity.response.dto";
+import { PaginatedFinancialActivitiesResponseDto } from "../dtos/financial-activity/paginated-financial-activities.response.dto";
 import { ExpenseSummaryResponseDto } from "../dtos/expense/expense-summary.response.dto";
 
 @Controller('expenses/house')
@@ -34,12 +35,23 @@ export class ExpenseController {
         @Param('houseId') houseId: string,
         @Query('startDate') startDate?: string,
         @Query('endDate') endDate?: string,
-    ): Promise<FinancialActivityResponseDto[]> {
+        @Query('page') page?: string,
+        @Query('pageSize') pageSize?: string,
+    ): Promise<PaginatedFinancialActivitiesResponseDto> {
         const houseIdNum = parseInt(houseId, 10);
+        const pageNum = page ? Math.max(1, parseInt(page, 10)) : 1;
+        const pageSizeNum = pageSize ? Math.max(1, parseInt(pageSize, 10)) : 10;
+
         if (startDate && endDate) {
-            return this.expenseUseCase.getHouseActivitiesByDateRange(houseIdNum, new Date(startDate), new Date(endDate));
+            return this.expenseUseCase.getHouseActivitiesPaginated(
+                houseIdNum,
+                pageNum,
+                pageSizeNum,
+                new Date(startDate),
+                new Date(endDate)
+            );
         }
-        return this.expenseUseCase.getHouseActivities(houseIdNum);
+        return this.expenseUseCase.getHouseActivitiesPaginated(houseIdNum, pageNum, pageSizeNum);
     }
 
     @Get('by-roomie/:roomieId')

@@ -3,6 +3,7 @@ import { EXPENSE_REPOSITORY, EXPENSE_SHARE_REPOSITORY, ROOMIE_HOUSE_REPOSITORY, 
 import { Settlement } from "src/domain/entities/settlement.entity";
 import { ExpenseRepository, ExpenseShareRepository, RoomieHouseRepository, RoomieRepository, SettlementRepository } from "src/domain/repositories";
 import { SettlementCreateRequestDto } from "src/presentation/dtos/settlement/settlement-create.request.dto";
+import { SettlementUpdateRequestDto } from "src/presentation/dtos/settlement/settlement-update.request.dto";
 import { SettlementResponseDto } from "src/presentation/dtos/settlement/settlement.response.dto";
 import { HouseBalanceSummaryResponseDto, BalanceDto, DetailedBalanceDto } from "src/presentation/dtos/settlement/balance-summary.response.dto";
 import { PersonalFinanceSyncService } from "src/application/services/personal-finance-sync.service";
@@ -22,6 +23,18 @@ export class SettlementUseCase {
     ) { }
 
     async createSettlement(createSettlementDto: SettlementCreateRequestDto, auth0Sub: string): Promise<SettlementResponseDto> {
+        // Obtener el creador
+        const creator = await this.roomieRepository.findByAuth0Sub(auth0Sub);
+        if (!creator) {
+            throw new NotFoundException(`User with auth0Sub ${auth0Sub} not found`);
+        }
+
+        //validar que el creador pertenezca a la casa
+        const creatorMembership = await this.roomieHouseRepository.findByRoomieAndHouse(creator.id, createSettlementDto.houseId);
+        if (!creatorMembership) {
+            throw new BadRequestException(`Roomie ${creator.id} is not an active member of house ${createSettlementDto.houseId}`);
+        }
+
         // Obtener el roomie por auth0Sub
         const fromRoomie = await this.roomieRepository.findById(createSettlementDto.fromRoomieId);
         if (!fromRoomie) {
@@ -215,6 +228,56 @@ export class SettlementUseCase {
         response.houseId = settlement.houseId;
         response.createdAt = settlement.createdAt;
         return response;
+    }
+
+    async updateSettlement(id: number, update: SettlementUpdateRequestDto, auth0Sub: string): Promise<SettlementResponseDto> {
+        // Editor must exist
+        const editor = await this.roomieRepository.findByAuth0Sub(auth0Sub);
+        if (!editor) throw new NotFoundException(`User with auth0Sub ${auth0Sub} not found`);
+
+        // Load existing settlement
+        const existing = await this.settlementRepository.findById(id);
+        if (!existing) throw new NotFoundException(`Settlement with ID ${id} not found`);
+
+        // Editor must belong to the house
+        const membership = await this.roomieHouseRepository.findByRoomieAndHouse(editor.id, existing.houseId);
+        if (!membership) throw new BadRequestException(`Roomie ${editor.id} is not an active member of house ${existing.houseId}`);
+
+        // Apply allowed changes
+        const newAmount = update.amount ?? existing.amount;
+        if (newAmount <= 0) throw new BadRequestException('Settlement amount must be positive');
+
+        const newFromRoomieId = update.fromRoomieId ?? existing.fromRoomieId;
+        const newToRoomieId = update.toRoomieId ?? existing.toRoomieId;
+        if (newToRoomieId === newFromRoomieId) {
+            throw new BadRequestException('Cannot set receiver equal to payer');
+        }
+
+        // Validate payer membership if changed
+        if (newFromRoomieId !== existing.fromRoomieId) {
+            const fromMembership = await this.roomieHouseRepository.findByRoomieAndHouse(newFromRoomieId, existing.houseId);
+            if (!fromMembership) throw new BadRequestException(`Roomie ${newFromRoomieId} is not an active member of house ${existing.houseId}`);
+        }
+
+        // Validate receiver membership if changed
+        if (newToRoomieId !== existing.toRoomieId) {
+            const toMembership = await this.roomieHouseRepository.findByRoomieAndHouse(newToRoomieId, existing.houseId);
+            if (!toMembership) throw new BadRequestException(`Roomie ${newToRoomieId} is not an active member of house ${existing.houseId}`);
+        }
+
+        const updated = Settlement.create(
+            newFromRoomieId,
+            newToRoomieId,
+            newAmount,
+            update.date ?? existing.date,
+            existing.houseId,
+            existing.id,
+            update.description ?? existing.description,
+            existing.createdAt
+        );
+
+        const saved = await this.settlementRepository.save(updated);
+        return this.mapToSettlementResponse(saved);
     }
 
     async getSettlementById(id: number): Promise<FinancialActivityResponseDto> {

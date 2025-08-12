@@ -11,6 +11,7 @@ import { ExpenseShareResponseDto } from "src/presentation/dtos/expense/expense-s
 import { ExpenseSummaryResponseDto } from "src/presentation/dtos/expense/expense-summary.response.dto";
 import { PersonalFinanceSyncService } from "src/application/services/personal-finance-sync.service";
 import { FinancialActivityResponseDto } from "src/presentation/dtos/financial-activity/financial-activity.response.dto";
+import { PaginatedFinancialActivitiesResponseDto } from "src/presentation/dtos/financial-activity/paginated-financial-activities.response.dto";
 
 @Injectable()
 export class ExpenseUseCase {
@@ -146,6 +147,30 @@ export class ExpenseUseCase {
         const all = [...expenseActivities, ...settlementActivities];
         all.sort((a, b) => b.date.getTime() - a.date.getTime());
         return all;
+    }
+
+    async getHouseActivitiesPaginated(
+        houseId: number,
+        page: number,
+        pageSize: number,
+        startDate?: Date,
+        endDate?: Date
+    ): Promise<PaginatedFinancialActivitiesResponseDto> {
+        let activities: FinancialActivityResponseDto[];
+        if (startDate && endDate) {
+            activities = await this.getHouseActivitiesByDateRange(houseId, startDate, endDate);
+        } else {
+            activities = await this.getHouseActivities(houseId);
+        }
+
+        const totalCount = activities.length;
+        const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+        const safePage = Math.min(Math.max(1, page), totalPages);
+        const start = (safePage - 1) * pageSize;
+        const end = start + pageSize;
+        const pageItems = activities.slice(start, end);
+
+        return new PaginatedFinancialActivitiesResponseDto(pageItems, totalCount, safePage, pageSize);
     }
 
     async updateExpense(expenseId: number, updateExpenseDto: ExpenseUpdateRequestDto): Promise<ExpenseWithSharesResponseDto> {

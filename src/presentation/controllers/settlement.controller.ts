@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { ProfileCompletedGuard } from "../guards/profile-completed.guard";
 import { User } from "../decorators/user.decorator";
@@ -6,6 +6,7 @@ import { AuthenticatedUserDto } from "src/application/dto/user/authenticated-use
 import { SettlementUseCase } from "src/application/use-cases/settlement/settlement.use_case";
 import { SettlementCreateRequestDto } from "../dtos/settlement/settlement-create.request.dto";
 import { SettlementResponseDto } from "../dtos/settlement/settlement.response.dto";
+import { SettlementUpdateRequestDto } from "../dtos/settlement/settlement-update.request.dto";
 import { HouseBalanceSummaryResponseDto } from "../dtos/settlement/balance-summary.response.dto";
 import { ExpenseResponseDto } from "../dtos/expense/expense.response.dto";
 import { FinancialActivityResponseDto } from "../dtos/financial-activity/financial-activity.response.dto";
@@ -31,6 +32,19 @@ export class SettlementController {
     @Get(':id')
     async getSettlementById(@Param('id') id: number): Promise<FinancialActivityResponseDto> {
         return await this.settlementUseCase.getSettlementById(id);
+    }
+
+    /**
+     * Editar un settlement
+     * PUT /settlements/:id
+     */
+    @Put(':id')
+    async updateSettlement(
+        @Param('id') id: number,
+        @Body() updateDto: SettlementUpdateRequestDto,
+        @User() user: AuthenticatedUserDto
+    ): Promise<SettlementResponseDto> {
+        return await this.settlementUseCase.updateSettlement(id, updateDto, user.sub);
     }
 
     /**
