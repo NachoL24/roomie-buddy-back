@@ -6,6 +6,8 @@ import { SettlementCreateRequestDto } from "src/presentation/dtos/settlement/set
 import { SettlementResponseDto } from "src/presentation/dtos/settlement/settlement.response.dto";
 import { HouseBalanceSummaryResponseDto, BalanceDto, DetailedBalanceDto } from "src/presentation/dtos/settlement/balance-summary.response.dto";
 import { PersonalFinanceSyncService } from "src/application/services/personal-finance-sync.service";
+import { FinancialActivityResponseDto } from "src/presentation/dtos/financial-activity/financial-activity.response.dto";
+import { Roomie } from "src/domain/entities";
 
 @Injectable()
 export class SettlementUseCase {
@@ -213,5 +215,39 @@ export class SettlementUseCase {
         response.houseId = settlement.houseId;
         response.createdAt = settlement.createdAt;
         return response;
+    }
+
+    async getSettlementById(id: number): Promise<FinancialActivityResponseDto> {
+        const settlement = await this.settlementRepository.findById(id);
+        if (!settlement) {
+            throw new NotFoundException(`Settlement with ID ${id} not found`);
+        }
+        const toRoomie = await this.roomieRepository.findById(settlement.toRoomieId);
+        if (!toRoomie) {
+            throw new NotFoundException(`Roomie with ID ${settlement.toRoomieId} not found`);
+        }
+        const fromRoomie = await this.roomieRepository.findById(settlement.fromRoomieId);
+        if (!fromRoomie) {
+            throw new NotFoundException(`Roomie with ID ${settlement.fromRoomieId} not found`);
+        }
+        return this.mapToFinancialActivityResponse(settlement, toRoomie!, fromRoomie!);
+    }
+
+    private mapToFinancialActivityResponse(settlement: Settlement, toRoomie: Roomie, fromRoomie: Roomie): FinancialActivityResponseDto {
+        return new FinancialActivityResponseDto(
+            settlement.id,
+            "settlement",
+            false,
+            null,
+            settlement.amount,
+            settlement.date,
+            settlement.description,
+            fromRoomie.name,
+            fromRoomie.picture,
+            toRoomie.name,
+            toRoomie.picture,
+            fromRoomie.id,
+            toRoomie.id
+        );
     }
 }

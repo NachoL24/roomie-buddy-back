@@ -7,6 +7,8 @@ import { SettlementUseCase } from "src/application/use-cases/settlement/settleme
 import { SettlementCreateRequestDto } from "../dtos/settlement/settlement-create.request.dto";
 import { SettlementResponseDto } from "../dtos/settlement/settlement.response.dto";
 import { HouseBalanceSummaryResponseDto } from "../dtos/settlement/balance-summary.response.dto";
+import { ExpenseResponseDto } from "../dtos/expense/expense.response.dto";
+import { FinancialActivityResponseDto } from "../dtos/financial-activity/financial-activity.response.dto";
 
 @Controller('settlements')
 @UseGuards(AuthGuard('jwt'), ProfileCompletedGuard)
@@ -24,6 +26,11 @@ export class SettlementController {
         @User() user: AuthenticatedUserDto
     ): Promise<SettlementResponseDto> {
         return await this.settlementUseCase.createSettlement(createSettlementDto, user.sub);
+    }
+
+    @Get(':id')
+    async getSettlementById(@Param('id') id: number): Promise<FinancialActivityResponseDto> {
+        return await this.settlementUseCase.getSettlementById(id);
     }
 
     /**
