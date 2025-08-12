@@ -25,7 +25,7 @@ export class Roomie {
     @Column()
     surname: string;
 
-    @Column({ nullable: true })
+    @Column({ nullable: true, unique: true })
     document?: string;
 
     @Column({ unique: true })

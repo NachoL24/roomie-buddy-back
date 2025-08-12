@@ -6,6 +6,7 @@ import { User } from '../decorators/user.decorator';
 import { AuthenticatedUserDto } from '../../application/dto/user/authenticated-user.dto';
 import { UserUseCase } from 'src/application/use-cases/user/user.use_case';
 import { RoomieUpdateDto } from '../dtos/roomie_update.request.dto';
+import { RoomieResponseDto } from '../dtos/roomie.response.dto';
 
 @Controller("user")
 @UseGuards(AuthGuard('jwt'))
@@ -17,19 +18,19 @@ export class UserController {
     ) { }
 
     @Get()
-    getUserOrCreateUser(@User() user: AuthenticatedUserDto): any {
+    getUserOrCreateUser(@User() user: AuthenticatedUserDto): Promise<RoomieResponseDto> {
         console.log("UserController - getUserOrCreateUser called with user:", user);
         return this.userUseCase.getUserOrCreateUser(user);
     }
 
     @Put(':id')
-    async updateUser(@User() user: AuthenticatedUserDto, @Body() dto: RoomieUpdateDto, @Param('id') id: number): Promise<any> {
+    async updateUser(@User() user: AuthenticatedUserDto, @Body() dto: RoomieUpdateDto, @Param('id') id: number): Promise<RoomieResponseDto> {
         console.log("UserController - updateUser called for userId:", id, "with data:", dto);
         return this.userUseCase.updateUser(user, dto, id);
     }
 
     @Get('email/:email')
-    async getUserByEmail(@Param('email') email: string): Promise<any> {
+    async getUserByEmail(@Param('email') email: string): Promise<RoomieResponseDto> {
         console.log("UserController - getUserByEmail called with email:", email);
         return this.userUseCase.getUserByEmail(email);
     }

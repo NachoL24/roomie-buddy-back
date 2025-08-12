@@ -71,7 +71,7 @@ export class Roomie {
             existing.id,
             dto.name || existing.name,
             dto.surname || existing.surname,
-            dto.email || existing.email,
+            existing.email,
             existing.createdAt,
             existing.auth0Sub,
             dto.document !== undefined ? dto.document : existing.document,
