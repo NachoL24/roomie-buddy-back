@@ -3,6 +3,7 @@ export class Settlement {
     public readonly fromRoomieId: number; // Quien paga
     public readonly toRoomieId: number;   // Quien recibe
     public readonly amount: number;
+    public readonly date: Date;           // Fecha del pago
     public readonly description?: string;
     public readonly houseId: number;
     public readonly createdAt: Date;
@@ -12,6 +13,7 @@ export class Settlement {
         fromRoomieId: number,
         toRoomieId: number,
         amount: number,
+        date: Date,
         houseId: number,
         createdAt: Date,
         description?: string
@@ -20,6 +22,7 @@ export class Settlement {
         this.fromRoomieId = fromRoomieId;
         this.toRoomieId = toRoomieId;
         this.amount = amount;
+        this.date = date;
         this.houseId = houseId;
         this.createdAt = createdAt;
         this.description = description;
@@ -29,6 +32,7 @@ export class Settlement {
         fromRoomieId: number,
         toRoomieId: number,
         amount: number,
+        date: Date,
         houseId: number,
         id?: number,
         description?: string,
@@ -39,6 +43,7 @@ export class Settlement {
             fromRoomieId,
             toRoomieId,
             amount,
+            date,
             houseId,
             createdAt || new Date(),
             description

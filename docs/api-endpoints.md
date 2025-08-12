@@ -670,6 +670,7 @@ POST /settlements
   "fromRoomieId": 2,
   "toRoomieId": 1,
   "amount": 5000,
+  "date": "2025-01-15T10:00:00.000Z",
   "houseId": 1,
   "description": "Pago parte supermercado"
 }
@@ -843,6 +844,7 @@ POST /settlements
   "fromRoomieId": 2,
   "toRoomieId": 1,
   "amount": 5000,
+  "date": "2025-01-15T10:00:00.000Z",
   "houseId": 1,
   "description": "Pago parte supermercado"
 }
@@ -1217,6 +1219,7 @@ interface SettlementCreateRequestDto {
   fromRoomieId: number;
   toRoomieId: number;
   amount: number;
+  date: Date; // Fecha y hora del pago (ISO 8601)
   houseId: number;
   description?: string;
 }
@@ -1226,6 +1229,7 @@ interface SettlementResponseDto {
   fromRoomieId: number;
   toRoomieId: number;
   amount: number;
+  date: Date; // Fecha y hora del pago
   houseId: number;
   description?: string;
   createdAt: Date;

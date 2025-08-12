@@ -47,7 +47,7 @@ export class PersonalFinanceSyncService {
             // Crea un expense para el que paga
             const expense = Expense.create(
                 settlement.amount,
-                settlement.createdAt || new Date(),
+                settlement.date || settlement.createdAt || new Date(),
                 settlement.fromRoomieId,
                 undefined, // houseId = undefined para indicarlo como personal
                 undefined,
@@ -61,7 +61,7 @@ export class PersonalFinanceSyncService {
                 settlement.amount,
                 settlement.toRoomieId,
                 undefined, // houseId = undefined para indicarlo como personal
-                settlement.createdAt || new Date()
+                settlement.date || settlement.createdAt || new Date()
             );
             await this.incomeRepository.save(income);
 

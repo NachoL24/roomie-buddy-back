@@ -10,7 +10,7 @@ export class SettlementTypeOrmRepository implements SettlementRepository {
     constructor(
         @InjectRepository(SettlementDbEntity)
         private readonly repository: Repository<SettlementDbEntity>
-    ) {}
+    ) { }
 
     async findById(id: number): Promise<Settlement | null> {
         const found = await this.repository.findOne({ where: { id } });
@@ -35,7 +35,7 @@ export class SettlementTypeOrmRepository implements SettlementRepository {
     }
 
     async findByHouseId(houseId: number): Promise<Settlement[]> {
-        const found = await this.repository.find({ 
+        const found = await this.repository.find({
             where: { houseId },
             order: { createdAt: 'DESC' }
         });
@@ -43,7 +43,7 @@ export class SettlementTypeOrmRepository implements SettlementRepository {
     }
 
     async findByFromRoomieId(fromRoomieId: number): Promise<Settlement[]> {
-        const found = await this.repository.find({ 
+        const found = await this.repository.find({
             where: { fromRoomieId },
             order: { createdAt: 'DESC' }
         });
@@ -51,7 +51,7 @@ export class SettlementTypeOrmRepository implements SettlementRepository {
     }
 
     async findByToRoomieId(toRoomieId: number): Promise<Settlement[]> {
-        const found = await this.repository.find({ 
+        const found = await this.repository.find({
             where: { toRoomieId },
             order: { createdAt: 'DESC' }
         });
@@ -64,7 +64,7 @@ export class SettlementTypeOrmRepository implements SettlementRepository {
             .orWhere('settlement.toRoomieId = :roomieId', { roomieId })
             .orderBy('settlement.createdAt', 'DESC')
             .getMany();
-        
+
         return found.map(entity => this.toDomainEntity(entity));
     }
 
@@ -73,6 +73,7 @@ export class SettlementTypeOrmRepository implements SettlementRepository {
             dbEntity.fromRoomieId,
             dbEntity.toRoomieId,
             Number(dbEntity.amount),
+            dbEntity.date,
             dbEntity.houseId,
             dbEntity.id,
             dbEntity.description,
@@ -86,6 +87,7 @@ export class SettlementTypeOrmRepository implements SettlementRepository {
         dbEntity.fromRoomieId = domainEntity.fromRoomieId;
         dbEntity.toRoomieId = domainEntity.toRoomieId;
         dbEntity.amount = domainEntity.amount;
+        dbEntity.date = domainEntity.date;
         dbEntity.description = domainEntity.description;
         dbEntity.houseId = domainEntity.houseId;
         dbEntity.createdAt = domainEntity.createdAt;

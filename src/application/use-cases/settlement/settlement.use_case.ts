@@ -52,15 +52,14 @@ export class SettlementUseCase {
             fromRoomie.id,
             createSettlementDto.toRoomieId,
             createSettlementDto.amount,
+            createSettlementDto.date || new Date(),
             createSettlementDto.houseId,
             undefined,
-            createSettlementDto.description
+            createSettlementDto.description,
+            undefined
         );
 
         const savedSettlement = await this.settlementRepository.save(settlement);
-
-        // Sincronizar con finanzas personales
-        await this.personalFinanceSyncService.syncSettlementToPersonalFinances(savedSettlement);
 
         return this.mapToSettlementResponse(savedSettlement);
     }
@@ -209,6 +208,7 @@ export class SettlementUseCase {
         response.fromRoomieId = settlement.fromRoomieId;
         response.toRoomieId = settlement.toRoomieId;
         response.amount = settlement.amount;
+        response.date = settlement.date;
         response.description = settlement.description;
         response.houseId = settlement.houseId;
         response.createdAt = settlement.createdAt;

@@ -20,6 +20,9 @@ export class Settlement {
     @Column('decimal', { precision: 12, scale: 2 })
     amount: number;
 
+    @Column({ type: 'timestamp' })
+    date: Date;
+
     @Column({ nullable: true })
     description?: string;
 
