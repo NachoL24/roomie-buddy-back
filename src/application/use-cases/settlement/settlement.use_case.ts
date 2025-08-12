@@ -169,11 +169,11 @@ export class SettlementUseCase {
 
         for (const settlement of roomieSettlements) {
             if (settlement.fromRoomieId === roomieId) {
-                // Este roomie pagó - restar del balance con el receptor
-                balances[settlement.toRoomieId] = (balances[settlement.toRoomieId] || 0) - settlement.amount;
+                // Este roomie pagó - aumenta el balance hacia 0 (reduce la deuda)
+                balances[settlement.toRoomieId] = (balances[settlement.toRoomieId] || 0) + settlement.amount;
             } else if (settlement.toRoomieId === roomieId) {
-                // Este roomie recibió - sumar al balance con el pagador
-                balances[settlement.fromRoomieId] = (balances[settlement.fromRoomieId] || 0) + settlement.amount;
+                // Este roomie recibió - disminuye lo que el otro te debe
+                balances[settlement.fromRoomieId] = (balances[settlement.fromRoomieId] || 0) - settlement.amount;
             }
         }
 
