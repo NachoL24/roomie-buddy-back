@@ -8,7 +8,7 @@ export class InvitationMapper {
             dbInvitation.house.id,
             dbInvitation.inviter.id,
             dbInvitation.invitee.id,
-            dbInvitation.inviteeEmail,
+            dbInvitation.inviterEmail,
             dbInvitation.status as 'PENDING' | 'ACCEPTED' | 'CANCELED' | 'DECLINED',
             dbInvitation.createdAt,
             dbInvitation.acceptedAt,
@@ -22,7 +22,7 @@ export class InvitationMapper {
         if (domainInvitation.id) {
             dbInvitation.id = domainInvitation.id;
         }
-        dbInvitation.inviteeEmail = domainInvitation.inviteeEmail;
+        dbInvitation.inviterEmail = domainInvitation.inviterEmail;
         dbInvitation.status = domainInvitation.status;
         dbInvitation.createdAt = domainInvitation.createdAt;
         dbInvitation.acceptedAt = domainInvitation.acceptedAt;

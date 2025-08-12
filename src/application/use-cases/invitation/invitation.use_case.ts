@@ -52,7 +52,7 @@ export class InvitationUseCase {
         // Verificar que no existe una invitación pendiente para este usuario en esta casa
         const existingInvitations = await this.invitationRepository.findByHouseId(createInvitation.houseId);
         const pendingInvitation = existingInvitations.find(inv =>
-            inv.inviteeEmail === createInvitation.inviteeEmail && inv.status === 'PENDING'
+            inv.inviterEmail === createInvitation.inviteeEmail && inv.status === 'PENDING'
         );
 
         if (pendingInvitation) {
@@ -70,7 +70,7 @@ export class InvitationUseCase {
         const savedInvitation = await this.invitationRepository.save(newInvitation);
         console.log("New invitation created:", savedInvitation);
 
-        return InvitationResponseDto.create(savedInvitation);
+        return InvitationResponseDto.create(savedInvitation, house.name, inviter.fullName);
     }
 
     async createInvitationByAuth0Sub(createInvitationDto: CreateInvitationRequestDto, auth0Sub: string): Promise<InvitationResponseDto> {
@@ -90,45 +90,21 @@ export class InvitationUseCase {
         return await this.createInvitation(internalDto);
     }
 
-    async getInvitationsByAuth0Sub(auth0Sub: string): Promise<InvitationResponseDto[]> {
-        const user = await this.roomieRepository.findByAuth0Sub(auth0Sub);
-        if (!user) {
-            throw new NotFoundException('User not found');
-        }
-        return await this.getInvitationsByUserId(user.id);
-    }
-
-    async getSentInvitationsByAuth0Sub(auth0Sub: string): Promise<InvitationResponseDto[]> {
-        const user = await this.roomieRepository.findByAuth0Sub(auth0Sub);
-        if (!user) {
-            throw new NotFoundException('User not found');
-        }
-        const allInvitations = await this.getInvitationsByUserId(user.id);
-        return allInvitations.filter(invitation => invitation.inviterId === user.id);
-    }
-
-    async getReceivedInvitationsByAuth0Sub(auth0Sub: string): Promise<InvitationResponseDto[]> {
-        const user = await this.roomieRepository.findByAuth0Sub(auth0Sub);
-        if (!user) {
-            throw new NotFoundException('User not found');
-        }
-        const allInvitations = await this.getInvitationsByUserId(user.id);
-        return allInvitations.filter(invitation => invitation.inviteeId === user.id);
-    }
-
-    async getInvitationsSummaryByAuth0Sub(auth0Sub: string): Promise<InvitationsSummaryResponseDto> {
-        const user = await this.roomieRepository.findByAuth0Sub(auth0Sub);
-        if (!user) {
-            throw new NotFoundException('User not found');
-        }
-        const allInvitations = await this.getInvitationsByUserId(user.id);
-        return InvitationsSummaryResponseDto.create(allInvitations);
-    }
-
     async acceptInvitation(invitationId: string, auth0Sub: string): Promise<InvitationResponseDto> {
         const invitation = await this.invitationRepository.findById(invitationId);
         if (!invitation) {
             throw new NotFoundException(`Invitation with ID ${invitationId} not found`);
+        }
+
+        const house = await this.houseRepository.findById(invitation.houseId);
+        if (!house) {
+            this.invitationRepository.delete(invitationId);
+            throw new NotFoundException(`House with ID ${invitation.houseId} not found`);
+        }
+
+        const inviter = await this.roomieRepository.findById(invitation.inviterId);
+        if (!inviter) {
+            throw new NotFoundException(`User with ID ${invitation.inviterId} not found`);
         }
 
         // Obtener el usuario por auth0Sub
@@ -165,13 +141,24 @@ export class InvitationUseCase {
 
         console.log(`User ${invitation.inviteeId} joined house ${invitation.houseId} and payRatios recalculated for all members`);
 
-        return InvitationResponseDto.create(savedInvitation);
+        return InvitationResponseDto.create(savedInvitation, house.name, inviter.fullName);
     }
 
     async declineInvitation(invitationId: string, auth0Sub: string): Promise<InvitationResponseDto> {
         const invitation = await this.invitationRepository.findById(invitationId);
         if (!invitation) {
             throw new NotFoundException(`Invitation with ID ${invitationId} not found`);
+        }
+
+        const house = await this.houseRepository.findById(invitation.houseId);
+        if (!house) {
+            this.invitationRepository.delete(invitationId);
+            throw new NotFoundException(`House with ID ${invitation.houseId} not found`);
+        }
+
+        const inviter = await this.roomieRepository.findById(invitation.inviterId);
+        if (!inviter) {
+            throw new NotFoundException(`User with ID ${invitation.inviterId} not found`);
         }
 
         // Obtener el usuario por auth0Sub
@@ -195,7 +182,7 @@ export class InvitationUseCase {
         const savedInvitation = await this.invitationRepository.save(declinedInvitation);
 
         console.log("Invitation declined:", savedInvitation);
-        return InvitationResponseDto.create(savedInvitation);
+        return InvitationResponseDto.create(savedInvitation, house.name, inviter.fullName);
     }
 
     async cancelInvitation(invitationId: string, auth0Sub: string): Promise<InvitationResponseDto> {
@@ -204,14 +191,20 @@ export class InvitationUseCase {
             throw new NotFoundException(`Invitation with ID ${invitationId} not found`);
         }
 
+        const house = await this.houseRepository.findById(invitation.houseId);
+        if (!house) {
+            this.invitationRepository.delete(invitationId);
+            throw new NotFoundException(`House with ID ${invitation.houseId} not found`);
+        }
+
         // Obtener el usuario por auth0Sub
-        const user = await this.roomieRepository.findByAuth0Sub(auth0Sub);
-        if (!user) {
+        const inviter = await this.roomieRepository.findByAuth0Sub(auth0Sub);
+        if (!inviter) {
             throw new NotFoundException('User not found');
         }
 
         // Verificar que el usuario que cancela es el que envió la invitación
-        if (invitation.inviterId !== user.id) {
+        if (invitation.inviterId !== inviter.id) {
             throw new BadRequestException('You can only cancel invitations you sent');
         }
 
@@ -225,23 +218,7 @@ export class InvitationUseCase {
         const savedInvitation = await this.invitationRepository.save(canceledInvitation);
 
         console.log("Invitation canceled:", savedInvitation);
-        return InvitationResponseDto.create(savedInvitation);
-    }
-
-    async getInvitationsByUserId(userId: number): Promise<InvitationResponseDto[]> {
-        // Obtener invitaciones recibidas por el usuario
-        const user = await this.roomieRepository.findById(userId);
-        if (!user) {
-            throw new NotFoundException(`User with ID ${userId} not found`);
-        }
-
-        const receivedInvitations = await this.invitationRepository.findByInviteeEmail(user.email);
-        const sentInvitations = await this.invitationRepository.findByInviterId(userId);
-
-        // Combinar invitaciones recibidas y enviadas
-        const allInvitations = [...receivedInvitations, ...sentInvitations];
-
-        return allInvitations.map(invitation => InvitationResponseDto.create(invitation));
+        return InvitationResponseDto.create(savedInvitation, house.name, inviter.fullName);
     }
 
     async getPendingNotificationsByAuth0Sub(auth0Sub: string): Promise<InvitationResponseDto[]> {
@@ -251,21 +228,25 @@ export class InvitationUseCase {
             throw new NotFoundException('User not found');
         }
 
-        const pendingInvitations = await this.invitationRepository.findPendingByInviteeEmail(user.email);
+        const pendingInvitations = await this.invitationRepository.findByPendingInviteeId(user.id);
 
-        return pendingInvitations.map(invitation => InvitationResponseDto.create(invitation));
-    }
-
-    async getPendingInvitationsByUserId(userId: number): Promise<InvitationResponseDto[]> {
-        // Obtener invitaciones pendientes recibidas por el usuario
-        const user = await this.roomieRepository.findById(userId);
-        if (!user) {
-            throw new NotFoundException(`User with ID ${userId} not found`);
-        }
-
-        const pendingInvitations = await this.invitationRepository.findPendingByInviteeEmail(user.email);
-
-        return pendingInvitations.map(invitation => InvitationResponseDto.create(invitation));
+        // Map async and resolve all to avoid returning an array of unresolved promises
+        const results = await Promise.all(
+            pendingInvitations.map(async (invitation) => {
+                const [house, inviter] = await Promise.all([
+                    this.houseRepository.findById(invitation.houseId),
+                    this.roomieRepository.findById(invitation.inviterId),
+                ]);
+                if (!house) {
+                    throw new NotFoundException(`House with ID ${invitation.houseId} not found`);
+                }
+                if (!inviter) {
+                    throw new NotFoundException(`Inviter with ID ${invitation.inviterId} not found`);
+                }
+                return InvitationResponseDto.create(invitation, house.name, inviter.fullName);
+            })
+        );
+        return results;
     }
 
     async getInvitationsByHouseId(houseId: number): Promise<InvitationResponseDto[]> {
@@ -275,7 +256,16 @@ export class InvitationUseCase {
         }
 
         const invitations = await this.invitationRepository.findByHouseId(houseId);
-        return invitations.map(invitation => InvitationResponseDto.create(invitation));
+        const results = await Promise.all(
+            invitations.map(async (invitation) => {
+                const inviter = await this.roomieRepository.findById(invitation.inviterId);
+                if (!inviter) {
+                    throw new NotFoundException(`Inviter with ID ${invitation.inviterId} not found`);
+                }
+                return InvitationResponseDto.create(invitation, house.name, inviter.fullName);
+            })
+        );
+        return results;
     }
 
     /**

@@ -1,6 +1,7 @@
 import { Invitation } from '../entities/invitation.entity';
 
 export interface InvitationRepository {
+    findByPendingInviteeId(id: number): Promise<Invitation[]>;
     findById(id: string): Promise<Invitation | null>;
     findByInviteeEmail(email: string): Promise<Invitation[]>;
     findByInviterId(inviterId: number): Promise<Invitation[]>;

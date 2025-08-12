@@ -3,7 +3,7 @@ export class Invitation {
     public readonly houseId: number;
     public readonly inviterId: number;
     public readonly inviteeId: number;
-    public readonly inviteeEmail: string;
+    public readonly inviterEmail: string;
     public readonly status: 'PENDING' | 'ACCEPTED' | 'CANCELED' | 'DECLINED';
     public readonly createdAt: Date;
     public readonly acceptedAt?: Date;
@@ -15,7 +15,7 @@ export class Invitation {
         houseId: number,
         inviterId: number,
         inviteeId: number,
-        inviteeEmail: string,
+        inviterEmail: string,
         status: 'PENDING' | 'ACCEPTED' | 'CANCELED' | 'DECLINED',
         createdAt: Date,
         acceptedAt?: Date,
@@ -26,7 +26,7 @@ export class Invitation {
         this.houseId = houseId;
         this.inviterId = inviterId;
         this.inviteeId = inviteeId;
-        this.inviteeEmail = inviteeEmail;
+        this.inviterEmail = inviterEmail;
         this.status = status;
         this.createdAt = createdAt;
         this.acceptedAt = acceptedAt;
@@ -38,7 +38,7 @@ export class Invitation {
         houseId: number,
         inviterId: number,
         inviteeId: number,
-        inviteeEmail: string,
+        inviterEmail: string,
         id?: string,
         status?: 'PENDING' | 'ACCEPTED' | 'CANCELED' | 'DECLINED',
         createdAt?: Date,
@@ -51,7 +51,7 @@ export class Invitation {
             houseId,
             inviterId,
             inviteeId,
-            inviteeEmail,
+            inviterEmail,
             status || 'PENDING',
             createdAt || new Date(),
             acceptedAt,
@@ -66,7 +66,7 @@ export class Invitation {
             this.houseId,
             this.inviterId,
             this.inviteeId,
-            this.inviteeEmail,
+            this.inviterEmail,
             'ACCEPTED',
             this.createdAt,
             new Date(),
@@ -81,7 +81,7 @@ export class Invitation {
             this.houseId,
             this.inviterId,
             this.inviteeId,
-            this.inviteeEmail,
+            this.inviterEmail,
             'DECLINED',
             this.createdAt,
             this.acceptedAt,
@@ -96,7 +96,7 @@ export class Invitation {
             this.houseId,
             this.inviterId,
             this.inviteeId,
-            this.inviteeEmail,
+            this.inviterEmail,
             'CANCELED',
             this.createdAt,
             this.acceptedAt,

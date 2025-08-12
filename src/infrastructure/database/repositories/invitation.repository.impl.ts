@@ -29,7 +29,15 @@ export class TypeOrmInvitationRepository implements InvitationRepository {
 
     async findByInviteeEmail(email: string): Promise<DomainInvitation[]> {
         const dbInvitations = await this.invitationRepository.find({
-            where: { inviteeEmail: email },
+            where: { inviterEmail: email },
+            relations: ['house', 'inviter', 'invitee']
+        });
+        return InvitationMapper.toDomainArray(dbInvitations);
+    }
+
+    async findByPendingInviteeId(id: number): Promise<DomainInvitation[]> {
+        const dbInvitations = await this.invitationRepository.find({
+            where: { invitee: { id }, status: 'PENDING' },
             relations: ['house', 'inviter', 'invitee']
         });
         return InvitationMapper.toDomainArray(dbInvitations);
@@ -62,7 +70,7 @@ export class TypeOrmInvitationRepository implements InvitationRepository {
     async findPendingByInviteeEmail(email: string): Promise<DomainInvitation[]> {
         const dbInvitations = await this.invitationRepository.find({
             where: {
-                inviteeEmail: email,
+                inviterEmail: email,
                 status: 'PENDING'
             },
             relations: ['house', 'inviter', 'invitee']

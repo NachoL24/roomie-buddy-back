@@ -81,60 +81,6 @@ export class InvitationController {
     }
 
     /**
-     * Obtener todas las invitaciones del usuario autenticado
-     * GET /invitations/my-invitations
-     */
-    @Get('my-invitations')
-    async getMyInvitations(@User() user: AuthenticatedUserDto): Promise<InvitationResponseDto[]> {
-        return await this.invitationUseCase.getInvitationsByAuth0Sub(user.sub);
-    }
-
-    /**
-     * Obtener todas las invitaciones enviadas por el usuario autenticado
-     * GET /invitations/my-invitations/sent
-     */
-    @Get('my-invitations/sent')
-    async getMySentInvitations(@User() user: AuthenticatedUserDto): Promise<InvitationResponseDto[]> {
-        return await this.invitationUseCase.getSentInvitationsByAuth0Sub(user.sub);
-    }
-
-    /**
-     * Obtener todas las invitaciones recibidas por el usuario autenticado
-     * GET /invitations/my-invitations/received
-     */
-    @Get('my-invitations/received')
-    async getMyReceivedInvitations(@User() user: AuthenticatedUserDto): Promise<InvitationResponseDto[]> {
-        return await this.invitationUseCase.getReceivedInvitationsByAuth0Sub(user.sub);
-    }
-
-    /**
-     * Obtener resumen de invitaciones del usuario autenticado
-     * GET /invitations/my-invitations/summary
-     */
-    @Get('my-invitations/summary')
-    async getMyInvitationsSummary(@User() user: AuthenticatedUserDto): Promise<InvitationsSummaryResponseDto> {
-        return await this.invitationUseCase.getInvitationsSummaryByAuth0Sub(user.sub);
-    }
-
-    /**
-     * Obtener invitaciones por ID de usuario (admin endpoint)
-     * GET /invitations/user/:userId
-     */
-    @Get('user/:userId')
-    async getInvitationsByUserId(@Param('userId') userId: number): Promise<InvitationResponseDto[]> {
-        return await this.invitationUseCase.getInvitationsByUserId(userId);
-    }
-
-    /**
-     * Obtener invitaciones pendientes por ID de usuario (admin endpoint)
-     * GET /invitations/user/:userId/pending
-     */
-    @Get('user/:userId/pending')
-    async getPendingInvitationsByUserId(@Param('userId') userId: number): Promise<InvitationResponseDto[]> {
-        return await this.invitationUseCase.getPendingInvitationsByUserId(userId);
-    }
-
-    /**
      * Obtener invitaciones por ID de casa
      * GET /invitations/house/:houseId
      */

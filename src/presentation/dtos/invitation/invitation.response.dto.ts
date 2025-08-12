@@ -3,9 +3,11 @@ import { Invitation } from "src/domain/entities/invitation.entity";
 export class InvitationResponseDto {
     public readonly id: string;
     public readonly houseId: number;
+    public readonly houseName: string;
     public readonly inviterId: number;
     public readonly inviteeId: number;
-    public readonly inviteeEmail: string;
+    public readonly inviterName: string;
+    public readonly inviterEmail: string;
     public readonly status: 'PENDING' | 'ACCEPTED' | 'CANCELED' | 'DECLINED';
     public readonly createdAt: Date;
     public readonly acceptedAt?: Date;
@@ -15,9 +17,11 @@ export class InvitationResponseDto {
     constructor(
         id: string,
         houseId: number,
+        houseName: string,
         inviterId: number,
         inviteeId: number,
-        inviteeEmail: string,
+        inviterName: string,
+        inviterEmail: string,
         status: 'PENDING' | 'ACCEPTED' | 'CANCELED' | 'DECLINED',
         createdAt: Date,
         acceptedAt?: Date,
@@ -26,9 +30,11 @@ export class InvitationResponseDto {
     ) {
         this.id = id;
         this.houseId = houseId;
+        this.houseName = houseName;
         this.inviterId = inviterId;
         this.inviteeId = inviteeId;
-        this.inviteeEmail = inviteeEmail;
+        this.inviterName = inviterName;
+        this.inviterEmail = inviterEmail;
         this.status = status;
         this.createdAt = createdAt;
         this.acceptedAt = acceptedAt;
@@ -36,13 +42,15 @@ export class InvitationResponseDto {
         this.canceledAt = canceledAt;
     }
 
-    static create(invitation: Invitation): InvitationResponseDto {
+    static create(invitation: Invitation, houseName: string, inviterName: string): InvitationResponseDto {
         return new InvitationResponseDto(
             invitation.id,
             invitation.houseId,
+            houseName,
             invitation.inviterId,
             invitation.inviteeId,
-            invitation.inviteeEmail,
+            inviterName,
+            invitation.inviterEmail,
             invitation.status,
             invitation.createdAt,
             invitation.acceptedAt,
@@ -55,9 +63,11 @@ export class InvitationResponseDto {
         return {
             id: this.id,
             houseId: this.houseId,
+            houseName: this.houseName,
             inviterId: this.inviterId,
             inviteeId: this.inviteeId,
-            inviteeEmail: this.inviteeEmail,
+            inviterName: this.inviterName,
+            inviteeEmail: this.inviterEmail,
             status: this.status,
             createdAt: this.createdAt,
             acceptedAt: this.acceptedAt,

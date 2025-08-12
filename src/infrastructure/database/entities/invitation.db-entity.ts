@@ -17,7 +17,7 @@ export class Invitation {
     invitee: Roomie;
 
     @Column()
-    inviteeEmail: string;
+    inviterEmail: string;
 
     @Column({ type: 'enum', enum: ['PENDING', 'ACCEPTED', 'CANCELED', 'DECLINED'], default: 'PENDING' })
     status: string;
