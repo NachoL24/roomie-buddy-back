@@ -21,9 +21,9 @@ export class SettlementUseCase {
 
     async createSettlement(createSettlementDto: SettlementCreateRequestDto, auth0Sub: string): Promise<SettlementResponseDto> {
         // Obtener el roomie por auth0Sub
-        const fromRoomie = await this.roomieRepository.findByAuth0Sub(auth0Sub);
+        const fromRoomie = await this.roomieRepository.findById(createSettlementDto.fromRoomieId);
         if (!fromRoomie) {
-            throw new NotFoundException(`User with auth0Sub ${auth0Sub} not found`);
+            throw new NotFoundException(`User with id ${createSettlementDto.fromRoomieId} not found`);
         }
 
         // Validar que ambos roomies sean miembros activos de la casa
