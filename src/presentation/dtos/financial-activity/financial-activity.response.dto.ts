@@ -118,7 +118,7 @@ export class FinancialActivityResponseDto {
             houseName,
             settlement.amount,
             settlement.createdAt,
-            description,
+            settlement.description,
             paidByName,
             paidByPicture,
             paidToName,
