@@ -69,12 +69,13 @@ export class RoomieResponseDto {
     }
 
     static fromDomain(roomie: Roomie): RoomieResponseDto {
+        const isCompleted = !!(roomie.name && roomie.surname && roomie.email && roomie.document && roomie.document.trim().length > 0);
         return new RoomieResponseDto(
             roomie.id,
             roomie.name,
             roomie.surname,
             roomie.email,
-            !!(roomie.name && roomie.surname && roomie.email && roomie.document && roomie.picture),
+            isCompleted,
             roomie.auth0Sub,
             roomie.document,
             roomie.picture

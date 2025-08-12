@@ -1,5 +1,5 @@
+import { Auth0Profile } from "src/infrastructure/external-services/auth0/auth0-userInfo.adapter";
 import { RoomieUpdateDto } from "src/presentation/dtos/roomie_update.request.dto";
-
 export class Roomie {
     public readonly id: number;
     public readonly name: string;
@@ -77,6 +77,21 @@ export class Roomie {
             dto.document !== undefined ? dto.document : existing.document,
             dto.picture !== undefined ? dto.picture : existing.picture,
             new Date(), // updatedAt
+            existing.deletedAt
+        );
+    }
+
+    public static updateFromAuth0(existing: Roomie, auth0Payload: Auth0Profile): Roomie {
+        return new Roomie(
+            existing.id,
+            auth0Payload.given_name || existing.name,
+            auth0Payload.family_name || existing.surname,
+            existing.email,
+            existing.createdAt,
+            existing.auth0Sub,
+            existing.document,
+            auth0Payload.picture || existing.picture,
+            new Date(),
             existing.deletedAt
         );
     }

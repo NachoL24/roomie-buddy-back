@@ -23,12 +23,15 @@ export class UserUseCase {
         console.log("Fetching user by Auth0 Sub:", auth0Payload.sub);
         let existingUser = await this.roomieRepository.findByAuth0Sub(auth0Payload.sub);
 
-        if (existingUser) {
-            return RoomieResponseDto.fromDomain(existingUser);
-        }
-        console.log("No existing user found by Auth0 Sub, fetching user info...");
+        console.log("fetching user info")
         const userInfo = await this.auth0UserinfoAdapter.fetchProfile(auth0Payload.accessToken);
         console.log("Fetched user info:", userInfo);
+        if (existingUser) {
+            const updatedRoomie = Roomie.updateFromAuth0(existingUser, auth0Payload);
+            await this.roomieRepository.save(updatedRoomie);
+            return RoomieResponseDto.fromDomain(updatedRoomie);
+        }
+        console.log("No existing user found by Auth0 Sub");
         if (!userInfo) {
             throw new Error('No se pudo obtener la información del usuario, intentelo mas tarde');
         }
