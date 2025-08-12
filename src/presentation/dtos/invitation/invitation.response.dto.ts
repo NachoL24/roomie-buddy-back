@@ -67,7 +67,7 @@ export class InvitationResponseDto {
             inviterId: this.inviterId,
             inviteeId: this.inviteeId,
             inviterName: this.inviterName,
-            inviteeEmail: this.inviterEmail,
+            inviterEmail: this.inviterEmail,
             status: this.status,
             createdAt: this.createdAt,
             acceptedAt: this.acceptedAt,
