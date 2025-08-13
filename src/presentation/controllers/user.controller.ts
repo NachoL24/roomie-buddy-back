@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Request, Post, Put, Body, Param } from '@nestjs/common';
+import { Controller, Get, UseGuards, Request, Post, Put, Body, Param, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Auth0ManagementApiAdapter } from 'src/infrastructure/external-services/auth0/auth0-managementapi.adapter';
 import { Auth0UserinfoAdapter } from 'src/infrastructure/external-services/auth0/auth0-userInfo.adapter';
@@ -29,9 +29,15 @@ export class UserController {
         return this.userUseCase.updateUser(user, dto, id);
     }
 
-    @Get('email/:email')
-    async getUserByEmail(@Param('email') email: string): Promise<RoomieResponseDto> {
+    @Get('search')
+    async getUserByEmail(@Query('email') email: string, @Query('houseId') houseId: number): Promise<RoomieResponseDto> {
         console.log("UserController - getUserByEmail called with email:", email);
-        return this.userUseCase.getUserByEmail(email);
+        return this.userUseCase.getUserByEmail(email, houseId);
+    }
+
+    @Get(':id')
+    async getUserById(@Param('id') id: number): Promise<RoomieResponseDto> {
+        console.log("UserController - getUserById called with id:", id);
+        return this.userUseCase.getUserResponseById(id);
     }
 }

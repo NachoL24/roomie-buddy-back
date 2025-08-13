@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Roomie as DomainRoomie } from '../../../domain/entities/roomie.entity';
 import { RoomieRepository } from '../../../domain/repositories/roomie.repository';
 import { Roomie as DbRoomie } from '../entities/roomie.db-entity';
+import { Invitation as DbInvitation } from '../entities/invitation.db-entity';
 import { RoomieMapper } from '../../mappers/roomie.mapper';
 
 @Injectable()
@@ -45,10 +46,21 @@ export class TypeOrmRoomieRepository implements RoomieRepository {
         return dbRoomie ? RoomieMapper.toDomain(dbRoomie) : null;
     }
 
-    async find5ByEmail(email: string): Promise<DomainRoomie[]> {
+    async find5ByEmail(email: string, houseId: number): Promise<DomainRoomie[]> {
         const dbRoomies = await this.roomieRepository
             .createQueryBuilder('roomie')
-            .where('roomie.email LIKE :email', { email: `${email}%` })
+            .where('roomie.email LIKE :email', { email: `%${email}%` })
+            .andWhere((qb) => {
+                const sub = qb.subQuery()
+                    .select('1')
+                    .from(DbInvitation, 'inv')
+                    .where('inv.inviteeId = roomie.id')
+                    .andWhere('inv.houseId = :houseId')
+                    .andWhere('inv.status = :pending')
+                    .getQuery();
+                return `NOT EXISTS ${sub}`;
+            })
+            .setParameters({ houseId, pending: 'PENDING' })
             .limit(5)
             .getMany();
         return RoomieMapper.toDomainArray(dbRoomies);

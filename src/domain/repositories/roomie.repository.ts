@@ -8,6 +8,6 @@ export interface RoomieRepository {
     save(roomie: Roomie): Promise<Roomie>;
     delete(id: number): Promise<void>;
     findByEmail(email: string): Promise<Roomie | null>;
-    find5ByEmail(email: string): Promise<Roomie[]>;
+    find5ByEmail(email: string, houseId: number): Promise<Roomie[]>;
     findByHouseId(houseId: number): Promise<Roomie[]>;
 }

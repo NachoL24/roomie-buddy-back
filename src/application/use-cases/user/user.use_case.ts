@@ -1,5 +1,5 @@
 import { Auth0ManagementApiAdapter } from 'src/infrastructure/external-services/auth0/auth0-managementapi.adapter';
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { AuthenticatedUserDto } from "src/application/dto/user/authenticated-user.dto";
 import { House, Roomie } from "src/domain/entities";
 import { RoomieRepository } from "src/domain/repositories";
@@ -11,12 +11,17 @@ import { HouseResponseDto } from 'src/presentation/dtos/house/house.response.dto
 
 @Injectable()
 export class UserUseCase {
-    
-    getUserByEmail(email: string): any {
-        return this.roomieRepository.find5ByEmail(email);
+
+    getUserByEmail(email: string, houseId: number): any {
+        return this.roomieRepository.find5ByEmail(email, houseId);
     }
 
     constructor(@Inject(ROOMIE_REPOSITORY) private readonly roomieRepository: RoomieRepository, private readonly auth0UserinfoAdapter: Auth0UserinfoAdapter, private readonly auth0ManagementApiAdapter: Auth0ManagementApiAdapter) { }
+
+    getUserResponseById(id: number): RoomieResponseDto | PromiseLike<RoomieResponseDto> {
+        return this.roomieRepository.findById(id)
+            .then(roomie => roomie ? RoomieResponseDto.fromDomain(roomie) : Promise.reject(new NotFoundException('User not found')));
+    }
 
     async getUserOrCreateUser(auth0Payload: AuthenticatedUserDto): Promise<RoomieResponseDto> {
         // 1. Intentar encontrar usuario por Auth0 Sub
