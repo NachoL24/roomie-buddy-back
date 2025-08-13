@@ -8,6 +8,7 @@ import { Auth0Profile, Auth0UserinfoAdapter } from "src/infrastructure/external-
 import { RoomieResponseDto } from "src/presentation/dtos/roomie.response.dto";
 import { RoomieUpdateDto } from "src/presentation/dtos/roomie_update.request.dto";
 import { HouseResponseDto } from 'src/presentation/dtos/house/house.response.dto';
+import { AvatarsService } from '../avatars/avatar-service';
 
 @Injectable()
 export class UserUseCase {
@@ -16,7 +17,7 @@ export class UserUseCase {
         return this.roomieRepository.find5ByEmail(email, houseId);
     }
 
-    constructor(@Inject(ROOMIE_REPOSITORY) private readonly roomieRepository: RoomieRepository, private readonly auth0UserinfoAdapter: Auth0UserinfoAdapter, private readonly auth0ManagementApiAdapter: Auth0ManagementApiAdapter) { }
+    constructor(@Inject(ROOMIE_REPOSITORY) private readonly roomieRepository: RoomieRepository, private readonly auth0UserinfoAdapter: Auth0UserinfoAdapter, private readonly auth0ManagementApiAdapter: Auth0ManagementApiAdapter, private readonly avatars: AvatarsService) { }
 
     getUserResponseById(id: number): RoomieResponseDto | PromiseLike<RoomieResponseDto> {
         return this.roomieRepository.findById(id)
@@ -32,9 +33,21 @@ export class UserUseCase {
         const userInfo = await this.auth0UserinfoAdapter.fetchProfile(auth0Payload.accessToken);
         console.log("Fetched user info:", userInfo);
         if (existingUser) {
-            const updatedRoomie = Roomie.updateFromAuth0(existingUser, auth0Payload);
-            await this.roomieRepository.save(updatedRoomie);
-            return RoomieResponseDto.fromDomain(updatedRoomie);
+            // If migration is needed, migrate and prefer the Azure URL; otherwise don't overwrite existing picture
+            let azureUrl: string | null = null;
+            if (this.avatars.needsMigration(existingUser.picture) && userInfo.picture) {
+                console.log("Avatar migration needed for existing user:", existingUser.id);
+                azureUrl = await this.avatars.migrateFromUrl(String(existingUser.id), userInfo.picture);
+                console.log("Avatar migration result (existing user):", azureUrl);
+            }
+            const profileForUpdate: Auth0Profile = {
+                ...userInfo,
+                // Only set picture when we have an Azure URL to avoid overwriting with the Auth0 CDN URL
+                picture: azureUrl || undefined,
+            };
+            const updated = Roomie.updateFromAuth0(existingUser, profileForUpdate);
+            await this.roomieRepository.save(updated);
+            return RoomieResponseDto.fromDomain(updated);
         }
         console.log("No existing user found by Auth0 Sub");
         if (!userInfo) {
@@ -54,10 +67,28 @@ export class UserUseCase {
 
         // 3. Crear nuevo usuario
         const newUser = await this.createUserFromAuth0(userInfo);
-
-        const roomieDto = RoomieResponseDto.fromDomain(newUser);
-        console.log("Created Roomie DTO:", roomieDto);
-        return roomieDto;
+        const azureUrl = userInfo.picture
+            ? await this.avatars.migrateFromUrl(String(newUser.id), userInfo.picture)
+            : null;
+        let finalUser = newUser;
+        if (azureUrl) {
+            // Create a new immutable instance with the Azure picture and save
+            const updatedNewUser = Roomie.create(
+                newUser.name,
+                newUser.surname,
+                newUser.email,
+                newUser.auth0Sub,
+                newUser.id,
+                newUser.document,
+                azureUrl,
+                newUser.createdAt,
+                new Date(),
+                newUser.deletedAt
+            );
+            finalUser = await this.roomieRepository.save(updatedNewUser);
+        }
+        console.log("Avatar migration result (new user):", azureUrl);
+        return RoomieResponseDto.fromDomain(finalUser);
     }
 
     async getUserByAuth0Sub(auth0Sub: string): Promise<Roomie | null> {
@@ -115,7 +146,7 @@ export class UserUseCase {
         const updatedRoomie = Roomie.updateFrom(existingRoomie, dto);
 
         this.checkProfileCompletion(updatedRoomie);
-        
+
         console.log("Updated Roomie before saving:", updatedRoomie);
         await this.roomieRepository.save(updatedRoomie);
 

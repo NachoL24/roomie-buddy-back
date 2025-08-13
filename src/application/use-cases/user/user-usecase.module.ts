@@ -3,12 +3,14 @@ import { UserUseCase } from './user.use_case';
 import { RepositoriesModule } from '../../../infrastructure/database/repositories/repositories.module';
 import { Auth0UserinfoModule } from '../../../infrastructure/external-services/auth0/auth0-userInfo.module';
 import { Auth0ManagementApiModule } from 'src/infrastructure/external-services/auth0/auth0-managementapi.module';
+import { AvatarsModule } from '../avatars/avatars.module';
 
 @Module({
     imports: [
         RepositoriesModule,
         Auth0UserinfoModule,
-        Auth0ManagementApiModule
+        Auth0ManagementApiModule,
+        AvatarsModule
     ],
     providers: [UserUseCase],
     exports: [UserUseCase],

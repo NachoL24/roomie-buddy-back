@@ -7,6 +7,7 @@ import { RoomieHouseRepositoryModule } from './roomie-house-repository.module';
 import { InvitationRepositoryModule } from './invitation-repository.module';
 import { SettlementRepositoryModule } from './settlement-repository.module';
 import { IncomeRepositoryModule } from './income-repository.module';
+import { AzureBlobServiceModule } from 'src/infrastructure/external-services/azure/azure-blob-service.module';
 
 @Module({
     imports: [
@@ -18,6 +19,7 @@ import { IncomeRepositoryModule } from './income-repository.module';
         InvitationRepositoryModule,
         SettlementRepositoryModule,
         IncomeRepositoryModule,
+        AzureBlobServiceModule,
     ],
     exports: [
         HouseRepositoryModule,
@@ -28,6 +30,7 @@ import { IncomeRepositoryModule } from './income-repository.module';
         InvitationRepositoryModule,
         SettlementRepositoryModule,
         IncomeRepositoryModule,
+        AzureBlobServiceModule,
     ],
 })
 export class RepositoriesModule { }
