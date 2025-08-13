@@ -5,7 +5,7 @@ export interface InvitationRepository {
     findById(id: string): Promise<Invitation | null>;
     findByInviteeEmail(email: string): Promise<Invitation[]>;
     findByInviterId(inviterId: number): Promise<Invitation[]>;
-    findByHouseId(houseId: number): Promise<Invitation[]>;
+    findByHouseIdAndStatusPending(houseId: number): Promise<Invitation[]>;
     findByStatus(status: 'PENDING' | 'ACCEPTED' | 'CANCELED' | 'DECLINED'): Promise<Invitation[]>;
     findPendingByInviteeEmail(email: string): Promise<Invitation[]>;
     save(invitation: Invitation): Promise<Invitation>;

@@ -51,9 +51,9 @@ export class TypeOrmInvitationRepository implements InvitationRepository {
         return InvitationMapper.toDomainArray(dbInvitations);
     }
 
-    async findByHouseId(houseId: number): Promise<DomainInvitation[]> {
+    async findByHouseIdAndStatusPending(houseId: number): Promise<DomainInvitation[]> {
         const dbInvitations = await this.invitationRepository.find({
-            where: { house: { id: houseId } },
+            where: { house: { id: houseId }, status: 'PENDING' },
             relations: ['house', 'inviter', 'invitee']
         });
         return InvitationMapper.toDomainArray(dbInvitations);

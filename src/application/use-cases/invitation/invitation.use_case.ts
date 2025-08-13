@@ -50,7 +50,7 @@ export class InvitationUseCase {
         }
 
         // Verificar que no existe una invitación pendiente para este usuario en esta casa
-        const existingInvitations = await this.invitationRepository.findByHouseId(createInvitation.houseId);
+        const existingInvitations = await this.invitationRepository.findByHouseIdAndStatusPending(createInvitation.houseId);
         const pendingInvitation = existingInvitations.find(inv =>
             inv.inviterEmail === createInvitation.inviteeEmail && inv.status === 'PENDING'
         );
@@ -255,7 +255,7 @@ export class InvitationUseCase {
             throw new NotFoundException(`House with ID ${houseId} not found`);
         }
 
-        const invitations = await this.invitationRepository.findByHouseId(houseId);
+        const invitations = await this.invitationRepository.findByHouseIdAndStatusPending(houseId);
         const results = await Promise.all(
             invitations.map(async (invitation) => {
                 const inviter = await this.roomieRepository.findById(invitation.inviterId);
