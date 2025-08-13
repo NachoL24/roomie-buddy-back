@@ -87,11 +87,6 @@ export class HouseController {
         return await this.houseUseCase.removeMemberFromHouse(houseId, roomieId, user.sub);
     }
 
-    // @Put(':id')
-    // update(@Param('id') id: string, @Body() updateHouseDto: UpdateHouseDto) {
-    //     // Logic to update a house
-    // }
-
     @Delete(':id')
     remove(@Param('id') id: number) {
         return this.houseUseCase.removeHouse(id);
