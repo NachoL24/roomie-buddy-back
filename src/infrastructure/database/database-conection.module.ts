@@ -17,11 +17,11 @@ export class DatabaseConnectionModule {
             useFactory: (configService: ConfigService) => {
                 const config = {
                     type: 'mysql',
-                    host: configService.get<string>('DB_HOST'),
-                    port: configService.get<number>('DB_PORT') || 3306,
-                    username: configService.get<string>('DB_USER'),
-                    password: configService.get<string>('DB_PASS'),
-                    database: configService.get<string>('DB_NAME'),
+                    host: configService.get<string>('DB_HOST') || 'db',
+                    port: parseInt((configService.get<string>('DB_PORT') ?? '3306'), 10),
+                    username: configService.get<string>('DB_USER') || 'root',
+                    password: configService.get<string>('DB_PASS') || 'root',
+                    database: configService.get<string>('DB_NAME') || 'roomie_buddy',
                     entities: [
                         Roomie,
                         House,
