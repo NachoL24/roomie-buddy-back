@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { EXPENSE_REPOSITORY, INCOME_REPOSITORY, ROOMIE_REPOSITORY } from "src/infrastructure/database/repositories";
+import { EXPENSE_REPOSITORY, INCOME_REPOSITORY, ROOMIE_REPOSITORY, SETTLEMENT_REPOSITORY } from "src/infrastructure/database/repositories";
 import { Expense } from "src/domain/entities/expense.entity";
-import { ExpenseRepository, IncomeRepository, RoomieRepository } from "src/domain/repositories";
+import { ExpenseRepository, IncomeRepository, RoomieRepository, SettlementRepository } from "src/domain/repositories";
 import { PersonalExpenseCreateRequestDto } from "src/presentation/dtos/expense/personal-expense-create.request.dto";
 import { PersonalExpenseUpdateRequestDto } from "src/presentation/dtos/expense/personal-expense-update.request.dto";
 import { PersonalExpenseResponseDto } from "src/presentation/dtos/expense/personal-expense.response.dto";
@@ -14,6 +14,7 @@ export class PersonalExpenseUseCase {
         @Inject(EXPENSE_REPOSITORY) private readonly expenseRepository: ExpenseRepository,
         @Inject(INCOME_REPOSITORY) private readonly incomeRepository: IncomeRepository,
         @Inject(ROOMIE_REPOSITORY) private readonly roomieRepository: RoomieRepository,
+        @Inject(SETTLEMENT_REPOSITORY) private readonly settlementRepository: SettlementRepository,
     ) { }
 
     // Auth0 subject helper methods
@@ -291,7 +292,7 @@ export class PersonalExpenseUseCase {
 
         // Obtener ingresos personales del período (ingresos sin houseId)
         const allIncomes = await this.incomeRepository.findByEarnedById(userId);
-        
+
         const personalIncomes = allIncomes.filter(income =>
             income.houseId === null || income.houseId === undefined
         );
@@ -299,14 +300,36 @@ export class PersonalExpenseUseCase {
             income.earnedAt >= defaultStartDate && income.earnedAt <= defaultEndDate
         );
 
-        // Calcular totales del período
-        const currentMonthExpenses = periodExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-        const currentMonthIncome = periodIncomes.reduce((sum, income) => sum + income.amount, 0);
+        // Obtener settlements del período
+        const allSettlements = await this.settlementRepository.findByRoomieId(userId);
+        const periodSettlements = allSettlements.filter(settlement =>
+            settlement.createdAt >= defaultStartDate && settlement.createdAt <= defaultEndDate
+        );
 
-        // Calcular balance total acumulado (todos los gastos e ingresos personales)
+        // Sumar settlements según dirección: enviados restan (egreso), recibidos suman (ingreso)
+        const periodSettlementsSentTotal = periodSettlements
+            .filter(s => s.fromRoomieId === userId)
+            .reduce((sum, s) => sum + s.amount, 0);
+        const periodSettlementsReceivedTotal = periodSettlements
+            .filter(s => s.toRoomieId === userId)
+            .reduce((sum, s) => sum + s.amount, 0);
+
+        // Calcular totales del período (incluye settlements)
+        const periodExpensesTotal = periodExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+        const periodIncomeTotal = periodIncomes.reduce((sum, income) => sum + income.amount, 0);
+        const currentMonthExpenses = periodExpensesTotal + periodSettlementsSentTotal;
+        const currentMonthIncome = periodIncomeTotal + periodSettlementsReceivedTotal;
+
+        // Calcular balance total acumulado (todos los gastos e ingresos personales + settlements netos)
         const totalPersonalExpenses = allPersonalExpenses.reduce((sum, expense) => sum + expense.amount, 0);
         const totalPersonalIncome = personalIncomes.reduce((sum, income) => sum + income.amount, 0);
-        const totalBalance = totalPersonalIncome - totalPersonalExpenses;
+        const totalSettlementsSent = allSettlements
+            .filter(s => s.fromRoomieId === userId)
+            .reduce((sum, s) => sum + s.amount, 0);
+        const totalSettlementsReceived = allSettlements
+            .filter(s => s.toRoomieId === userId)
+            .reduce((sum, s) => sum + s.amount, 0);
+        const totalBalance = (totalPersonalIncome + totalSettlementsReceived) - (totalPersonalExpenses + totalSettlementsSent);
 
         return PersonalFinancialSummaryResponseDto.create(
             currentMonthExpenses,
