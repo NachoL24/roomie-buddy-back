@@ -22,6 +22,9 @@ export class DatabaseConnectionModule {
                     username: configService.get<string>('DB_USER') || 'root',
                     password: configService.get<string>('DB_PASS') || 'root',
                     database: configService.get<string>('DB_NAME') || 'roomie_buddy',
+                    ssl: {
+                        rejectUnauthorized: configService.get<string>('DB_SSL') === 'true'
+                    },
                     entities: [
                         Roomie,
                         House,
